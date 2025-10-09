@@ -1,9 +1,9 @@
-import { Character, CharacterClass, Enemy, GameLocation, Skill, Item, Equipment, EquipmentSlot, ItemRarity, Blueprint, SkillTome } from './types';
-import * as dom from './dom';
-import * as ui from './ui';
-import { soundManager, SOUNDS } from './sound';
-import { CHARACTER_CLASSES, CHARACTER_PORTRAITS, CLASS_SKILLS, TOWN_NAME_PREFIXES, TOWN_NAME_SUFFIXES, ITEMS, ENEMIES, LOCATIONS, RARITY_DATA, BLUEPRINTS, UNIVERSAL_SKILLS } from './data';
-import { openSettingsModal, openShopModal } from './ui';
+import { Character, CharacterClass, Enemy, GameLocation, Skill, Item, Equipment, EquipmentSlot, ItemRarity, Blueprint, SkillTome } from '.types';
+import * as dom from '.dom';
+import * as ui from '.ui';
+import { soundManager, SOUNDS } from '.sound';
+import { CHARACTER_CLASSES, CHARACTER_PORTRAITS, CLASS_SKILLS, TOWN_NAME_PREFIXES, TOWN_NAME_SUFFIXES, ITEMS, ENEMIES, LOCATIONS, RARITY_DATA, BLUEPRINTS, UNIVERSAL_SKILLS } from '.data';
+import { openSettingsModal, openShopModal } from '.ui';
 
 // --- GAME STATE ---
 interface GameState {

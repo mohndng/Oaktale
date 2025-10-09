@@ -1,4 +1,4 @@
-import { initializeGame } from './game';
+import { initializeGame } from '.game';
 
 // Start the game
 initializeGame();

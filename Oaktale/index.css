@@ -1,0 +1,1002 @@
+:root {
+    --bg-color: #0a0a0a;
+    --primary-text: #f5f5f5;
+    --secondary-text: #aaaaaa;
+    --border-color: #333333;
+    --accent-color: #ffffff;
+    --accent-hover: #cccccc;
+    --card-bg: #1a1a1a;
+    --card-bg-light: #2b2b2b;
+    --log-bg: #0a0a0a;
+    --hp-color: #e0e0e0;
+    --hp-bg: #444444;
+    --xp-color: #b0b0b0;
+    --xp-bg: #444444;
+    --shield-color: rgba(255, 255, 255, 0.4);
+    --heal-color: #f5f5f5;
+    --font-display: 'Caesar Dressing', cursive;
+    --font-title: 'Montserrat', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+    --rank-normal: #cccccc;
+    --rank-rare: #dddddd;
+    --rank-elite: #eeeeee;
+    --rank-epic: #f5f5f5;
+    --rank-legend: #ffffff;
+    --rank-mysterious: #ffffff;
+    --item-equipment: #dddddd;
+    --item-consumable: #bbbbbb;
+    --item-material: #aaaaaa;
+    --item-skilltome: #c084fc;
+    --req-met: #4ade80;
+    --req-not-met: #f87171;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-color);
+    color: var(--primary-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+}
+
+#app, #main-menu {
+    width: 100%;
+    max-width: 1400px;
+    height: 95vh;
+    max-height: 850px;
+}
+
+#main-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+h1, h2 {
+    font-family: var(--font-display);
+    color: var(--primary-text);
+    font-weight: 400; /* Caesar Dressing only has 400 weight */
+    letter-spacing: 2px;
+}
+
+h3, h4 {
+    font-family: var(--font-title);
+    color: var(--primary-text);
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 4.5rem;
+    color: var(--accent-color);
+    text-shadow: 0 0 15px rgba(255,255,255,0.4);
+}
+
+h2 {
+    font-size: 2.8rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+
+#game-container {
+    display: flex;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Character Selection Screen */
+#character-selection-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+
+#character-selection-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--log-bg);
+}
+
+.selection-card {
+    background-color: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: center;
+}
+
+.selection-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-hover);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.selection-card.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    transform: translateY(-5px) scale(1.02);
+}
+
+.selection-card .character-portrait {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem auto;
+}
+
+.selection-card p {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin-top: 0.5rem;
+}
+
+
+/* Character Panel */
+#character-panel {
+    width: 320px;
+    background-color: var(--log-bg);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: filter 0.3s ease;
+}
+
+#character-panel.disabled {
+    filter: grayscale(80%) brightness(0.7);
+    pointer-events: none;
+}
+
+.character-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+.character-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-hover);
+}
+
+.character-card.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+}
+
+.character-portrait {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.character-portrait svg {
+    width: 65%;
+    height: 65%;
+}
+
+.character-card-info {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.character-card h3 {
+    margin-bottom: 0.25rem;
+}
+
+.character-card p {
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+}
+
+.character-equipped {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.character-equipped span {
+    display: block;
+}
+
+.character-card-settings-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    z-index: 5;
+}
+
+.character-card-settings-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--secondary-text);
+    transition: fill 0.2s;
+}
+
+.character-card-settings-btn:hover {
+    background-color: var(--card-bg-light);
+}
+
+.character-card-settings-btn:hover svg {
+    fill: var(--primary-text);
+}
+
+
+/* Main Content */
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#game-board {
+    flex-grow: 1;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#pre-combat-display, #combat-display {
+    width: 100%;
+    height: 100%;
+}
+
+#location-info {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+#location-description {
+    max-width: 600px;
+    margin: 1rem auto;
+    color: var(--secondary-text);
+    line-height: 1.6;
+}
+
+#action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+#combat-controls-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: rgba(10, 10, 10, 0.5);
+}
+
+
+/* Combat Display */
+#combat-display {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 2rem;
+    padding: 0 2rem;
+}
+
+.combatant-card {
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 350px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.enemy-portrait {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto 1rem auto;
+    border-radius: 50%;
+    border: 3px solid; /* color set dynamically */
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.enemy-portrait svg {
+    width: 70%;
+    height: 70%;
+}
+
+
+#player-combatant-card .character-portrait {
+    margin: 0 auto 1rem auto;
+    width: 130px;
+    height: 130px;
+}
+
+.combatant-card h3 {
+    margin-bottom: 0.5rem;
+}
+
+/* Buffs */
+.buff-container {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.buff-icon {
+    width: 32px;
+    height: 32px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--secondary-text);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: var(--secondary-text);
+    position: relative;
+    cursor: help;
+}
+
+/* Health & XP Bars */
+.health-bar-container, .xp-bar-container {
+    width: 100%;
+    height: 24px;
+    background-color: var(--hp-bg);
+    border-radius: 12px;
+    margin-top: 1rem;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.xp-bar-container {
+     background-color: var(--xp-bg);
+}
+
+.xp-bar {
+    height: 100%;
+    background-color: var(--xp-color);
+    transition: width 0.5s ease-in-out;
+    border-radius: 12px;
+}
+
+.health-bar, .shield-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+    border-radius: 12px;
+}
+
+.health-bar {
+    background: var(--hp-color);
+    z-index: 1;
+}
+
+.shield-bar {
+    background-color: var(--shield-color);
+    z-index: 2;
+}
+
+.bar-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--bg-color);
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.2);
+    z-index: 3;
+}
+
+.player-level {
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+    color: var(--secondary-text);
+}
+
+
+/* Action Log & Inventory */
+#inventory-display {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(10, 10, 10, 0.5);
+}
+.inventory-summary {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+#items-list {
+    display: flex;
+    gap: 1rem;
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+}
+
+#action-log {
+    height: 120px;
+    background-color: var(--log-bg);
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+    font-size: 0.9rem;
+}
+
+#action-log p {
+    line-height: 1.5;
+    padding: 0.25rem 0;
+}
+#action-log p:first-child {
+    color: var(--accent-hover);
+    font-weight: 600;
+}
+
+/* Buttons */
+button {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--card-bg-light);
+    color: var(--primary-text);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+button:hover {
+    background-color: var(--border-color);
+    border-color: var(--secondary-text);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#main-menu button, #action-buttons button, #combat-controls-container button, #character-selection-screen button {
+     background-color: transparent;
+     border-color: var(--accent-color);
+     color: var(--accent-color);
+}
+#main-menu button:hover, #action-buttons button:hover, #combat-controls-container button:hover, #character-selection-screen button:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border-color: var(--accent-color);
+}
+
+
+button:disabled {
+    background-color: #2b2b2b;
+    border-color: #333333;
+    color: #666666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Modals */
+.modal-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 10, 10, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    max-width: 550px;
+    width: 90%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.modal-content h2 {
+    margin-bottom: 1rem;
+}
+.modal-content p {
+    margin-bottom: 1.5rem;
+    color: var(--secondary-text);
+}
+#skill-selection, #shop-items, #combat-items-list, #artisan-blueprints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    overflow-y: auto;
+    padding-right: 1rem;
+    margin-right: -1rem;
+    text-align: left;
+}
+.skill-option, .shop-item, .combat-item-option, .sell-item {
+    background-color: var(--bg-color);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.skill-option:hover, .shop-item:hover, .combat-item-option:hover, .sell-item:hover {
+    border-color: var(--secondary-text);
+}
+
+.skill-option.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+.skill-option p, .shop-item p, .sell-item p {
+    color: var(--secondary-text);
+    font-size: 0.9em;
+    margin-top: 0.25rem;
+}
+.shop-item, .sell-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.shop-item-info, .sell-item-info {
+    text-align: left;
+}
+
+/* Shop Modal Specifics */
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.shop-header h2 {
+    margin: 0;
+}
+#shop-toggle-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+#shop-toggle-buttons button {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+}
+#shop-toggle-buttons button.active {
+    background-color: var(--border-color);
+    border-color: var(--secondary-text);
+}
+
+.confirm-modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+.confirm-modal-buttons #confirm-yes-btn {
+    background-color: var(--primary-text);
+    border-color: var(--primary-text);
+    color: var(--bg-color);
+}
+.confirm-modal-buttons #confirm-yes-btn:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+/* Artisan Modal */
+.blueprint-item {
+    background-color: var(--bg-color);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.blueprint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.blueprint-header h4 {
+    margin: 0;
+}
+.blueprint-item p {
+    color: var(--secondary-text);
+    font-size: 0.9em;
+    margin: 0;
+}
+.blueprint-requirements ul {
+    list-style: none;
+    font-size: 0.85rem;
+}
+.blueprint-requirements .req-met {
+    color: var(--req-met);
+}
+.blueprint-requirements .req-not-met {
+    color: var(--req-not-met);
+}
+
+/* Skill Tooltip */
+#skill-tooltip {
+    position: fixed;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    max-width: 250px;
+    z-index: 200;
+    pointer-events: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: left;
+}
+#skill-tooltip h4 {
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+#skill-tooltip p {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Inventory Modal */
+.inventory-modal-content {
+    max-width: 800px;
+    width: 95%;
+}
+.inventory-container {
+    display: flex;
+    gap: 1.5rem;
+    height: 55vh;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+.inventory-list-section {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--log-bg);
+    overflow-y: auto;
+}
+.inventory-details-section {
+    flex: 1;
+}
+#inventory-item-list .category-title {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+#inventory-item-list .category-title:first-child {
+    margin-top: 0;
+}
+.inventory-item {
+    padding: 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.inventory-item:hover {
+    background-color: var(--card-bg-light);
+}
+.inventory-item.selected {
+    border-color: var(--accent-hover);
+    background-color: var(--border-color);
+}
+.item-name-Equipment { color: var(--item-equipment); font-weight: 600; }
+.item-name-Consumable { color: var(--item-consumable); font-weight: 600; }
+.item-name-Material { color: var(--item-material); }
+.item-name-SkillTome { color: var(--item-skilltome); font-weight: 600; }
+
+.equipment-slots {
+    background-color: var(--log-bg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+.equipment-slots .slot {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    align-items: center;
+    font-size: 0.9rem;
+}
+.equipment-slots .slot span { color: var(--primary-text); }
+.equipment-slots .slot button { font-size: 0.7rem; padding: 0.2rem 0.5rem; font-weight: 400; letter-spacing: 0; }
+
+#item-details-pane {
+    background-color: var(--log-bg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 8px;
+}
+#item-details-description { color: var(--secondary-text); }
+#item-details-stats { margin: 1rem 0; font-size: 0.9em; }
+#item-details-stats p { margin-bottom: 0.5rem; }
+#item-details-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Settings Modal */
+.settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+    width: 100%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.settings-option button {
+    min-width: 120px;
+}
+
+/* Animations */
+@keyframes lunge-forth {
+    0% { transform: translateX(0) scale(1); }
+    50% { transform: translateX(20px) scale(1.05); }
+    100% { transform: translateX(0) scale(1); }
+}
+#player-combatant-card.animate-attack {
+    animation: lunge-forth 0.3s ease-in-out;
+}
+@keyframes lunge-forth-rev {
+    0% { transform: translateX(0) scale(1); }
+    50% { transform: translateX(-20px) scale(1.05); }
+    100% { transform: translateX(0) scale(1); }
+}
+#enemy-combatant-card.animate-attack {
+    animation: lunge-forth-rev 0.3s ease-in-out;
+}
+
+@keyframes shake-horizontal {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+@keyframes flash {
+    0%, 100% { box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 0 25px 10px var(--flash-color, rgba(255,255,255,0.7)); }
+}
+
+@keyframes float-up {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-70px); opacity: 0; }
+}
+
+.animate-attack {
+    animation: lunge-forth 0.3s ease-in-out;
+}
+.animate-hit {
+    --flash-color: rgba(255, 255, 255, 0.4);
+    animation: shake-horizontal 0.4s ease-in-out, flash 0.4s ease;
+}
+.animate-heal {
+    --flash-color: rgba(230, 230, 230, 0.5);
+    animation: flash 0.5s ease;
+}
+.animate-shield {
+    --flash-color: rgba(255, 255, 255, 0.4);
+    animation: flash 0.5s ease;
+}
+
+
+/* Damage Popups */
+.damage-popup-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+.damage-popup {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-title);
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+    animation: float-up 1.2s ease-out forwards;
+}
+.damage-popup.damage { color: var(--primary-text); }
+.damage-popup.heal { color: var(--primary-text); }
+.damage-popup.shield { color: var(--primary-text); }
+.damage-popup.miss { color: var(--secondary-text); font-size: 2rem; }
+
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    body {
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+    }
+    #app, #game-container {
+        height: 100%;
+        max-height: none;
+        flex-direction: column;
+        border-radius: 0;
+    }
+    #main-content {
+        min-height: 0; /* Critical for allowing flex children to shrink and scroll */
+    }
+    #character-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0.75rem;
+        height: auto;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 1rem;
+    }
+    .character-card {
+        flex-shrink: 0;
+        width: 280px;
+    }
+    #game-board {
+        padding: 1rem;
+        min-height: 0; /* Prevents flexbox overflow issues */
+        overflow-y: auto; /* Allows combat cards to scroll if needed */
+    }
+    #combat-display {
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 1rem;
+        height: auto; /* Allow the container to grow with its content, enabling scroll on parent */
+    }
+    .combatant-card {
+        width: 100%;
+        max-width: 350px;
+        padding: 1rem;
+    }
+    .modal-content {
+        max-height: 90vh;
+    }
+    .inventory-container {
+        flex-direction: column;
+        height: 60vh;
+    }
+}
+
+@media (max-width: 850px) {
+    #character-selection-cards {
+      grid-template-columns: repeat(2, 1fr);
+      max-width: 550px;
+    }
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 3.5rem;
+    }
+    h2 {
+        font-size: 2.2rem;
+    }
+    #character-selection-cards {
+      grid-template-columns: 1fr;
+      max-width: 300px;
+    }
+    #character-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .character-card {
+        width: 100%;
+    }
+}

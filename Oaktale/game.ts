@@ -754,6 +754,9 @@ function useItemFromInventory(itemId: string) {
     if (itemUsed) {
         ui.renderInventoryList((id) => ui.renderItemDetails(id, equipItem, useItemFromInventory));
         ui.renderItemDetails(itemId, equipItem, useItemFromInventory);
+        if (player.inventory[itemId] === 0) {
+            dom.getElement('item-details-pane').classList.add('hidden');
+        }
         ui.renderCharacterPanel(openInventoryModal, handlers.openSettingsModal);
         saveGame();
     }

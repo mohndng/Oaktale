@@ -31,7 +31,7 @@
             <div id="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
-            <p id="loading-message"></p>
+            <p id="loading-message">Loading... <span id="loading-percentage">0</span>%</p>
         </div>
 
         <div id="intro-storyline" class="hidden">
@@ -118,6 +118,19 @@
     </div>
 
     <!-- Modals -->
+    <div id="api-key-modal" class="modal-background hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Enter API Key</h2>
+            </div>
+            <p>Please enter your Google Gemini API key to proceed. This is required for generating in-game assets.</p>
+            <input type="password" id="api-key-input" placeholder="Enter your API key">
+            <div class="modal-footer">
+                <button id="save-api-key-btn">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+
     <div id="shop-modal" class="modal-background hidden">
         <div class="modal-content">
             <div class="modal-header">

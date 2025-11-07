@@ -1518,63 +1518,70 @@ const handlers = {
 
 // --- INITIALIZATION ---
 export function initializeGame() {
-    if (loadGame() && gameState.selectedCharacter) {
-        dom.newGameBtn.classList.remove('hidden');
-        dom.continueBtn.classList.remove('hidden');
-        dom.continueBtn.onclick = () => {
-            soundManager.play(SOUNDS.SELECT);
-            dom.mainMenu.classList.add('hidden');
-            dom.gameContainer.classList.remove('hidden');
-            addLogMessage("Welcome back! Your adventure continues.");
-            ui.renderAll(gameState, handlers);
-        };
-        dom.newGameBtn.onclick = () => {
-             showConfirmModal("Are you sure you want to start a new game? Your previous save will be overwritten.", newGame);
-        };
-    } else {
-        dom.newGameBtn.classList.remove('hidden');
-        dom.newGameBtn.textContent = 'New Game';
-        dom.continueBtn.classList.add('hidden');
-        dom.newGameBtn.onclick = newGame;
-    }
-    
-    let storyIndex = 0;
-    let storyTimeoutId: ReturnType<typeof setTimeout>;
-
-    const endIntroSequence = () => {
-        clearTimeout(storyTimeoutId);
-        dom.introStoryline.style.opacity = '0';
-        dom.mainMenu.classList.remove('hidden');
-        dom.mainMenu.classList.add('fade-in-container');
-        setTimeout(() => dom.introStoryline.classList.add('hidden'), 1500);
-    };
-
-    const showNextStoryLine = () => {
-        if (storyIndex >= STORYLINE.length) {
-            endIntroSequence();
-            return;
+    const startGameLogic = () => {
+        if (loadGame() && gameState.selectedCharacter) {
+            dom.newGameBtn.classList.remove('hidden');
+            dom.continueBtn.classList.remove('hidden');
+            dom.continueBtn.onclick = () => {
+                soundManager.play(SOUNDS.SELECT);
+                dom.mainMenu.classList.add('hidden');
+                dom.gameContainer.classList.remove('hidden');
+                addLogMessage("Welcome back! Your adventure continues.");
+                ui.renderAll(gameState, handlers);
+            };
+            dom.newGameBtn.onclick = () => {
+                 showConfirmModal("Are you sure you want to start a new game? Your previous save will be overwritten.", newGame);
+            };
+        } else {
+            dom.newGameBtn.classList.remove('hidden');
+            dom.newGameBtn.textContent = 'New Game';
+            dom.continueBtn.classList.add('hidden');
+            dom.newGameBtn.onclick = newGame;
         }
-        
-        dom.storyText.textContent = STORYLINE[storyIndex];
-        dom.storyText.className = 'fade-in';
-        storyIndex++;
-        
-        storyTimeoutId = setTimeout(() => {
-            dom.storyText.className = 'fade-out';
-            storyTimeoutId = setTimeout(showNextStoryLine, 1500); // Wait for fade-out
-        }, 3000); // Display for 3s
+
+        let storyIndex = 0;
+        let storyTimeoutId: ReturnType<typeof setTimeout>;
+
+        const endIntroSequence = () => {
+            clearTimeout(storyTimeoutId);
+            dom.introStoryline.style.opacity = '0';
+            dom.mainMenu.classList.remove('hidden');
+            dom.mainMenu.classList.add('fade-in-container');
+            setTimeout(() => dom.introStoryline.classList.add('hidden'), 1500);
+        };
+
+        const showNextStoryLine = () => {
+            if (storyIndex >= STORYLINE.length) {
+                endIntroSequence();
+                return;
+            }
+
+            dom.storyText.textContent = STORYLINE[storyIndex];
+            dom.storyText.className = 'fade-in';
+            storyIndex++;
+
+            storyTimeoutId = setTimeout(() => {
+                dom.storyText.className = 'fade-out';
+                storyTimeoutId = setTimeout(showNextStoryLine, 1500); // Wait for fade-out
+            }, 3000); // Display for 3s
+        };
+
+        const skipIntro = () => {
+            endIntroSequence();
+        };
+        dom.skipIntroBtn.onclick = skipIntro;
+
+        if (!localStorage.getItem('oaktaleGameState')) {
+            // Preloading screen is already visible, this will be hidden by preloadAssets
+            // The intro will be made visible by preloadAssets
+            dom.skipIntroBtn.classList.remove('hidden');
+            showNextStoryLine();
+        } else {
+            dom.introStoryline.classList.add('hidden');
+            dom.mainMenu.classList.remove('hidden');
+        }
     };
 
-    const skipIntro = () => {
-        endIntroSequence();
-    };
-    dom.skipIntroBtn.onclick = skipIntro;
-
-    if (!localStorage.getItem('oaktaleGameState')) {
-        dom.skipIntroBtn.classList.remove('hidden');
-        showNextStoryLine();
-    } else {
-        dom.introStoryline.classList.add('hidden');
-        dom.mainMenu.classList.remove('hidden');
-    }
+    // Start preloading, and once it's done, start the game logic.
+    ui.preloadAssets(startGameLogic);
 }

@@ -385,51 +385,6 @@ function createCharacter(className: CharacterClass) {
     gameState.characters.push(character);
 }
 
-async function handleGeneratePortrait(className: CharacterClass, cardElement: HTMLElement) {
-    const characterData = CLASS_DATA[className];
-    if (!characterData) return;
-
-    ui.setPortraitLoadingState(cardElement, true);
-
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `Epic fantasy RPG portrait of a ${className}, ${characterData.description}, dark fantasy style, atmospheric lighting`;
-        
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
-            config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/jpeg',
-              aspectRatio: '1:1',
-            },
-        });
-        
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-            const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
-            const newPortrait = `<img src="${imageUrl}" alt="Epic portrait of a ${className}">`;
-
-            const character = gameState.characters.find(c => c.name === className);
-            if (character) {
-                character.portrait = newPortrait;
-            }
-
-            const portraitContainer = cardElement.querySelector('[data-portrait-container]') as HTMLElement;
-            if (portraitContainer) {
-                portraitContainer.innerHTML = newPortrait;
-            }
-        } else {
-            addLogMessage("Failed to generate a new portrait. The model returned no images.");
-        }
-    } catch (error) {
-        console.error("Error generating portrait:", error);
-        addLogMessage("Failed to generate a new portrait. An error occurred. Please check the console for details.");
-    } finally {
-        ui.setPortraitLoadingState(cardElement, false);
-    }
-}
-
 function newGame() {
     gameState = {
         characters: [], selectedCharacter: null, currentLocation: 'main-menu', currentTownName: 'Oakhaven',
@@ -444,7 +399,7 @@ function newGame() {
         selectedName = name;
         dom.startGameBtn.disabled = false;
         soundManager.play(SOUNDS.CLICK);
-    }, handleGeneratePortrait);
+    });
     
     dom.startGameBtn.onclick = () => {
         if (selectedName) {

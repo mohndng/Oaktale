@@ -60,6 +60,7 @@ export interface Item {
     type: ItemType;
     rarity: ItemRarity;
     baseCost: number;
+    imageUrl?: string;
 }
 
 export interface PetEgg extends Item {
@@ -161,6 +162,7 @@ export interface Pet {
 export interface Character {
     name: CharacterClass;
     portrait: string;
+    imageUrl?: string;
     level: number;
     xp: number;
     xpToNextLevel: number;
@@ -206,6 +208,7 @@ export interface Enemy {
     id: string;
     name: string;
     portrait: string;
+    imageUrl?: string;
     type: EnemyType;
     rank: EnemyRank;
     level: number;

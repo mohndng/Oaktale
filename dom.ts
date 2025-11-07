@@ -57,3 +57,9 @@ export const modalImportGameBtn = getElement<HTMLButtonElement>('modal-import-ga
 export const modalExportGameBtn = getElement<HTMLButtonElement>('modal-export-game-btn');
 export const importFileInput = getElement<HTMLInputElement>('import-file-input');
 export const backgroundMusic = getElement<HTMLAudioElement>('background-music');
+export const preloadingScreen = getElement('preloading-screen');
+
+// API Key Modal
+export const apiKeyModal = getElement('api-key-modal');
+export const apiKeyInput = getElement<HTMLInputElement>('api-key-input');
+export const saveApiKeyBtn = getElement<HTMLButtonElement>('save-api-key-btn');

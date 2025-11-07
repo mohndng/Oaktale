@@ -24,6 +24,11 @@ export interface ExplorationEvent {
 }
 
 export interface GameState {
+    gameData: {
+        classData: { [key in CharacterClass]?: any };
+        items: { [id: string]: Item };
+        enemies: { [id: string]: Enemy };
+    };
     characters: Character[];
     selectedCharacter: Character | null;
     currentLocation: GameLocation;

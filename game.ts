@@ -7,7 +7,6 @@ import * as dom from './dom';
 import * as ui from './ui';
 import { soundManager, SOUNDS, musicManager } from './sound';
 import { CLASS_DATA, TOWN_NAME_PREFIXES, TOWN_NAME_SUFFIXES, ITEMS, ENEMIES, LOCATIONS, BLUEPRINTS, UNIVERSAL_SKILLS, NPC_NAMES, NPC_DIALOGUE_PREFIXES, QUEST_TEMPLATES, RARITY_DATA, PET_DATA } from './data';
-import { GoogleGenAI } from "@google/genai";
 
 // --- STORYLINE ---
 const STORYLINE = [
@@ -23,6 +22,11 @@ const STORYLINE = [
 
 // --- GAME STATE ---
 let gameState: GameState = {
+    gameData: {
+        classData: { ...CLASS_DATA },
+        items: { ...ITEMS },
+        enemies: { ...ENEMIES },
+    },
     characters: [],
     selectedCharacter: null,
     currentLocation: 'main-menu',
@@ -49,7 +53,7 @@ function formatLogMessage(message: string): string {
     let formattedMessage = ` ${message} `; // Add padding for word boundary checks
 
     // Dynamic replacements (most specific)
-    const allItems = Object.values(ITEMS);
+    const allItems = Object.values(gameState.gameData.items);
     allItems.forEach(item => {
         const itemRegex = new RegExp(`\\b(${escapeRegExp(item.name)})\\b`, 'g');
         if (formattedMessage.match(itemRegex)) {
@@ -59,7 +63,7 @@ function formatLogMessage(message: string): string {
     });
 
     const allSkills: Skill[] = [...UNIVERSAL_SKILLS];
-    Object.values(CLASS_DATA).forEach(c => allSkills.push(...c.skills));
+    Object.values(gameState.gameData.classData).forEach(c => allSkills.push(...c.skills));
     allSkills.forEach(skill => {
         const skillRegex = new RegExp(`\\b(${escapeRegExp(skill.name)})\\b`, 'g');
          if (formattedMessage.match(skillRegex)) {
@@ -105,7 +109,7 @@ function getSkillData(skillId: string, characterClass?: CharacterClass): Skill |
     if (universalSkill) return universalSkill;
     const charClass = characterClass || gameState.selectedCharacter?.name;
     if (charClass) {
-        const classSkill = CLASS_DATA[charClass].skills.find(s => s.id === skillId);
+        const classSkill = gameState.gameData.classData[charClass].skills.find(s => s.id === skillId);
         if (classSkill) return classSkill;
     }
     return undefined;
@@ -323,7 +327,7 @@ function loadGame(): boolean {
 }
 
 function createCharacter(className: CharacterClass) {
-    const classData = CLASS_DATA[className];
+    const classData = gameState.gameData.classData[className];
     const level = 1;
     const xpToNextLevel = calculateXpToNextLevel(level);
     
@@ -387,10 +391,15 @@ function createCharacter(className: CharacterClass) {
 
 function newGame() {
     gameState = {
+        gameData: {
+            classData: { ...CLASS_DATA },
+            items: { ...ITEMS },
+            enemies: { ...ENEMIES },
+        },
         characters: [], selectedCharacter: null, currentLocation: 'main-menu', currentTownName: 'Oakhaven',
         inCombat: false, isExploring: false, currentEnemy: null, playerTurn: true, log: [], isGameOver: false, currentArtisanBlueprints: [], currentQuestGiver: null,
     };
-    (Object.keys(CLASS_DATA) as CharacterClass[]).forEach(className => createCharacter(className));
+    (Object.keys(gameState.gameData.classData) as CharacterClass[]).forEach(className => createCharacter(className));
     dom.mainMenu.classList.add('hidden');
     dom.characterSelectionScreen.classList.remove('hidden');
 
@@ -488,7 +497,7 @@ function explore() {
                     addLogMessage(event.message || `You found ${gold} gold!`);
                     break;
                 case 'find_item':
-                    const item = ITEMS[event.itemId!];
+                    const item = gameState.gameData.items[event.itemId!];
                     if (item) {
                         const quantity = event.quantity || 1;
                         gameState.selectedCharacter!.inventory[item.id] = (gameState.selectedCharacter!.inventory[item.id] || 0) + quantity;
@@ -504,7 +513,7 @@ function explore() {
                         treasureMessage += ' and ';
                         const itemMessages: string[] = [];
                         event.items.forEach(itemDrop => {
-                            const foundItem = ITEMS[itemDrop.itemId];
+                            const foundItem = gameState.gameData.items[itemDrop.itemId];
                             if (foundItem) {
                                 gameState.selectedCharacter!.inventory[foundItem.id] = (gameState.selectedCharacter!.inventory[foundItem.id] || 0) + itemDrop.quantity;
                                 itemMessages.push(`${itemDrop.quantity > 1 ? itemDrop.quantity + ' ' : ''}${foundItem.name}`);
@@ -520,7 +529,7 @@ function explore() {
                 case 'npc':
                     if (event.message) addLogMessage(event.message);
                     if (event.itemId) {
-                        const npcItem = ITEMS[event.itemId];
+                        const npcItem = gameState.gameData.items[event.itemId];
                         const quantity = event.quantity || 1;
                         if (npcItem) {
                             gameState.selectedCharacter!.inventory[npcItem.id] = (gameState.selectedCharacter!.inventory[npcItem.id] || 0) + quantity;
@@ -551,7 +560,7 @@ function explore() {
 
 
 function startCombat(enemyId: string, isAmbush: boolean = false) {
-    const enemyData = { ...ENEMIES[enemyId] };
+    const enemyData = { ...gameState.gameData.enemies[enemyId] };
     if (!enemyData || !enemyData.rank) return;
 
     let rank: EnemyRank = enemyData.rank;
@@ -629,7 +638,7 @@ export function endCombat(win: boolean, message?: string) {
         enemy.drops.items.forEach(drop => {
             if (Math.random() < drop.chance) {
                 player.inventory[drop.itemId] = (player.inventory[drop.itemId] || 0) + 1;
-                addLogMessage(`The enemy dropped a ${ITEMS[drop.itemId].name}!`);
+                addLogMessage(`The enemy dropped a ${gameState.gameData.items[drop.itemId].name}!`);
             }
         });
         
@@ -929,10 +938,10 @@ function levelUp() {
     const player = gameState.selectedCharacter!;
     player.level++;
     player.xpToNextLevel = calculateXpToNextLevel(player.level);
-    player.baseHp += Math.round(CLASS_DATA[player.name].baseHp * 0.1);
-    player.baseAtk += Math.round(CLASS_DATA[player.name].baseAtk * 0.1);
+    player.baseHp += Math.round(gameState.gameData.classData[player.name].baseHp * 0.1);
+    player.baseAtk += Math.round(gameState.gameData.classData[player.name].baseAtk * 0.1);
     if (player.baseMp) {
-        player.baseMp += Math.round((CLASS_DATA[player.name].baseMp || 0) * 0.1);
+        player.baseMp += Math.round((gameState.gameData.classData[player.name].baseMp || 0) * 0.1);
     }
     updateCharacterStats(player);
     player.hp = player.maxHp;
@@ -943,7 +952,7 @@ function levelUp() {
     addLogMessage(`${player.name} has reached Level ${player.level}!`);
 
     // Automatically learn new skills
-    const classSkills = CLASS_DATA[player.name].skills;
+    const classSkills = gameState.gameData.classData[player.name].skills;
     const universalSkills = UNIVERSAL_SKILLS;
 
     const allLearnableSkills = [...classSkills, ...universalSkills];
@@ -1054,7 +1063,7 @@ function turnInQuest(questId: string) {
         if (quest.rewards.items) {
             quest.rewards.items.forEach(itemReward => {
                 player.inventory[itemReward.itemId] = (player.inventory[itemReward.itemId] || 0) + itemReward.quantity;
-                addLogMessage(`Quest Reward: ${ITEMS[itemReward.itemId].name} x${itemReward.quantity}.`);
+                addLogMessage(`Quest Reward: ${gameState.gameData.items[itemReward.itemId].name} x${itemReward.quantity}.`);
             });
         }
         
@@ -1223,7 +1232,7 @@ function openSettingsModal() {
 
 function openCombatItemModal() {
     const player = gameState.selectedCharacter!;
-    const consumables = Object.keys(player.inventory).filter(id => ITEMS[id]?.type === 'Consumable' && player.inventory[id] > 0);
+    const consumables = Object.keys(player.inventory).filter(id => gameState.gameData.items[id]?.type === 'Consumable' && player.inventory[id] > 0);
     if (consumables.length === 0) {
         addLogMessage("You have no items to use.");
         return;
@@ -1254,7 +1263,7 @@ function showInfoModal(title: string, text: string, onClose?: () => void) {
 
 function equipItem(itemId: string) {
     const player = gameState.selectedCharacter!;
-    const itemToEquip = ITEMS[itemId] as Equipment;
+    const itemToEquip = gameState.gameData.items[itemId] as Equipment;
     if (itemToEquip.type !== 'Equipment' || player.inventory[itemId] < 1) return;
     
     if (itemToEquip.allowedClasses && !itemToEquip.allowedClasses.includes(player.name)) {
@@ -1309,7 +1318,7 @@ function unequipItem(slot: EquipmentSlot) {
 
 function useItemFromInventory(itemId: string) {
     const player = gameState.selectedCharacter!;
-    const item = ITEMS[itemId];
+    const item = gameState.gameData.items[itemId];
     if (!item || player.inventory[itemId] < 1) return;
 
     let itemUsed = false;
@@ -1388,7 +1397,7 @@ function useItemFromInventory(itemId: string) {
 
 function playerUseItem(itemId: string) {
     const player = gameState.selectedCharacter!;
-    const item = ITEMS[itemId];
+    const item = gameState.gameData.items[itemId];
     if (!item || player.inventory[itemId] < 1) return;
     if (item.type !== 'Consumable') return;
 
@@ -1434,7 +1443,7 @@ function playerUseItem(itemId: string) {
 
 function handleOpenShop() {
     currentShopInventory = [];
-    const availableItems = Object.values(ITEMS).filter(i => i.type === 'Consumable' || i.type === 'Equipment');
+    const availableItems = Object.values(gameState.gameData.items).filter(i => i.type === 'Consumable' || i.type === 'Equipment');
     for (let i = 0; i < 5; i++) {
         const item = availableItems[Math.floor(Math.random() * availableItems.length)];
         const cost = Math.floor(item.baseCost * RARITY_DATA[item.rarity].multiplier * (0.8 + Math.random() * 0.4)); 
@@ -1450,7 +1459,7 @@ function buyItem(itemId: string, cost: number) {
     if (player.gold >= cost) {
         player.gold -= cost;
         player.inventory[itemId] = (player.inventory[itemId] || 0) + 1;
-        addLogMessage(`You bought ${ITEMS[itemId].name}.`);
+        addLogMessage(`You bought ${gameState.gameData.items[itemId].name}.`);
         soundManager.play(SOUNDS.CLICK);
         ui.openShopModal(player, currentShopInventory, buyItem, sellItem);
         ui.renderAll(gameState, handlers);
@@ -1460,7 +1469,7 @@ function buyItem(itemId: string, cost: number) {
 function sellItem(itemId: string) {
     const player = gameState.selectedCharacter!;
     if (player.inventory[itemId] > 0) {
-        const item = ITEMS[itemId];
+        const item = gameState.gameData.items[itemId];
         const sellPrice = Math.max(1, Math.floor(item.baseCost * 0.3));
         player.inventory[itemId]--;
         player.gold += sellPrice;
@@ -1499,7 +1508,7 @@ function craftItem(blueprintId: string) {
 
     player.inventory[blueprint.resultItemId] = (player.inventory[blueprint.resultItemId] || 0) + 1;
     
-    addLogMessage(`You crafted ${ITEMS[blueprint.resultItemId].name}!`);
+    addLogMessage(`You crafted ${gameState.gameData.items[blueprint.resultItemId].name}!`);
     soundManager.play(SOUNDS.LEVEL_UP);
 
     ui.openArtisanModal(player, gameState.currentArtisanBlueprints, craftItem);
@@ -1518,7 +1527,7 @@ const handlers = {
 
 // --- INITIALIZATION ---
 export function initializeGame() {
-    const startGameLogic = () => {
+    const startGameWithIntro = () => {
         if (loadGame() && gameState.selectedCharacter) {
             dom.newGameBtn.classList.remove('hidden');
             dom.continueBtn.classList.remove('hidden');
@@ -1582,6 +1591,22 @@ export function initializeGame() {
         }
     };
 
-    // Start preloading, and once it's done, start the game logic.
-    ui.preloadAssets(startGameLogic);
+    // Check for API Key before starting the game
+    const apiKey = localStorage.getItem('geminiApiKey');
+    if (!apiKey) {
+        dom.apiKeyModal.classList.remove('hidden');
+        dom.preloadingScreen.classList.add('hidden');
+
+        dom.saveApiKeyBtn.onclick = () => {
+            const inputKey = dom.apiKeyInput.value.trim();
+            if (inputKey) {
+                localStorage.setItem('geminiApiKey', inputKey);
+                dom.apiKeyModal.classList.add('hidden');
+                dom.preloadingScreen.classList.remove('hidden');
+                ui.preloadAssets(gameState.gameData, startGameWithIntro);
+            }
+        };
+    } else {
+        ui.preloadAssets(gameState.gameData, startGameWithIntro);
+    }
 }

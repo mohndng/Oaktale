@@ -1,8 +1,9 @@
 import { Character, CharacterClass, Enemy, Buff, Item, Equipment, EquipmentSlot, ItemType, Skill, Blueprint, SkillTome, GameState, Quest, Title, ItemRarity, Pet } from './types';
 import * as dom from './dom';
-import { CLASS_DATA, ITEMS, LOCATIONS, RARITY_DATA, UNIVERSAL_SKILLS, TITLES } from './data';
+import { CLASS_DATA, ITEMS, LOCATIONS, RARITY_DATA, UNIVERSAL_SKILLS, TITLES, ENEMIES } from './data';
 import { GameLocation } from './types';
 import { soundManager } from './sound';
+import { generateImage } from './ai';
 
 
 // --- UI HELPERS ---
@@ -890,59 +891,95 @@ export function openQuestLogModal(player: Character) {
     modal.classList.remove('hidden');
 }
 
-export async function preloadAssets(onComplete: () => void) {
-    const imageUrls = new Set<string>();
+export async function preloadAssets(gameData: any, onComplete: () => void) {
+    const assetsToLoad: { name: string; description: string; type: string; obj: any }[] = [];
 
-    // Gather image URLs from all data sources
-    Object.values(CLASS_DATA).forEach(c => c.imageUrl && imageUrls.add(c.imageUrl));
-    Object.values(ITEMS).forEach(i => i.imageUrl && imageUrls.add(i.imageUrl));
-    Object.values(ENEMIES).forEach(e => e.imageUrl && imageUrls.add(e.imageUrl));
+    // Collect all assets that need image generation
+    Object.values(gameData.classData).forEach((c: any) => {
+        if (!c.imageUrl) assetsToLoad.push({ name: c.name, description: c.description, type: 'character', obj: c });
+    });
+    Object.values(gameData.items).forEach((i: any) => {
+        // Only generate for interesting items, not basic materials or quest items for now
+        if (!i.imageUrl && (i.type === 'Equipment' || i.type === 'Consumable' || i.type === 'PetEgg' || i.type === 'SkillTome')) {
+            assetsToLoad.push({ name: i.name, description: i.description, type: 'item', obj: i });
+        }
+    });
+    Object.values(gameData.enemies).forEach((e: any) => {
+        if (!e.imageUrl) assetsToLoad.push({ name: e.name, description: e.description, type: 'enemy', obj: e });
+    });
 
-    const promises: Promise<any>[] = [];
-    const totalAssets = imageUrls.size;
+    const totalAssets = assetsToLoad.length;
     let loadedAssets = 0;
-
     const progressBar = dom.getElement('progress-bar');
+    const loadingPercentage = dom.getElement('loading-percentage');
     const loadingMessage = dom.getElement('loading-message');
 
+
     if (totalAssets === 0) {
+        // Even if there's nothing to generate, hide the preloader and continue
+        dom.getElement('preloading-screen').classList.add('hidden');
+        if (!localStorage.getItem('oaktaleGameState')) {
+           dom.getElement('intro-storyline').classList.remove('hidden');
+        }
         onComplete();
         return;
     }
 
-    imageUrls.forEach(url => {
-        const promise = new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                loadedAssets++;
-                const progress = (loadedAssets / totalAssets) * 100;
-                progressBar.style.width = `${progress}%`;
-                loadingMessage.textContent = `Loading ${loadedAssets} / ${totalAssets}...`;
-                resolve(img);
-            };
-            img.onerror = () => {
-                console.warn(`Failed to load image: ${url}`);
-                loadedAssets++; // Still count it as "loaded" to not stall the progress bar
-                const progress = (loadedAssets / totalAssets) * 100;
-                progressBar.style.width = `${progress}%`;
-                loadingMessage.textContent = `Loading ${loadedAssets} / ${totalAssets}...`;
-                resolve(null); // Resolve with null on error so Promise.all doesn't fail
-            };
-            img.src = url;
-        });
-        promises.push(promise);
-    });
+    // Show preloading screen if it was hidden
+    dom.preloadingScreen.classList.remove('hidden');
 
-    await Promise.all(promises);
+    console.log(`Found ${totalAssets} assets to generate.`);
+    const startTime = Date.now();
 
-    loadingMessage.textContent = 'All assets loaded!';
+    for (const asset of assetsToLoad) {
+        const progress = (loadedAssets / totalAssets) * 100;
+        progressBar.style.width = `${progress}%`;
+        loadingPercentage.textContent = `${Math.round(progress)}`;
+        loadingMessage.innerHTML = `Generating ${asset.type}: <strong>${asset.name}</strong>...`;
+
+        let prompt = '';
+        switch (asset.type) {
+            case 'character':
+                prompt = `Digital painting of a fantasy RPG character portrait. A ${asset.name}. ${asset.description}. Epic, detailed, high fantasy art style.`;
+                break;
+            case 'item':
+                prompt = `A fantasy RPG item icon for a ${asset.name}. ${asset.description}. Clean, simple background, painterly style.`;
+                break;
+            case 'enemy':
+                prompt = `Digital painting of a fantasy RPG monster portrait. A ${asset.name}. ${asset.description}. Dark, gritty, realistic fantasy art style.`;
+                break;
+        }
+
+        try {
+            console.log(`Generating image for ${asset.name} with prompt: "${prompt}"`);
+            const imageUrl = await generateImage(prompt);
+            asset.obj.imageUrl = imageUrl;
+        } catch (error) {
+            console.error(`Failed to generate image for ${asset.name}:`, error);
+            // Assign a placeholder so we don't try again next time
+            asset.obj.imageUrl = 'https://via.placeholder.com/64';
+        }
+
+        loadedAssets++;
+    }
+
+    // Final progress bar update
+    progressBar.style.width = `100%`;
+    loadingPercentage.textContent = `100`;
+    loadingMessage.textContent = 'Generation complete!';
+
+
+    const endTime = Date.now();
+    console.log(`Preloading complete in ${endTime - startTime}ms.`);
 
     // Short delay to show completion before fading out
     setTimeout(() => {
         dom.getElement('preloading-screen').classList.add('hidden');
-        dom.getElement('intro-storyline').classList.remove('hidden');
+         if (!localStorage.getItem('oaktaleGameState')) {
+           dom.getElement('intro-storyline').classList.remove('hidden');
+        }
         onComplete();
-    }, 500);
+    }, 1000);
 }
 
 export function openSettingsModal(onClearLog: () => void, onSave: () => void, onQuit: () => void, onImport: () => void, onExport: () => void) {

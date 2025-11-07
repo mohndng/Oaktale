@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oaktale</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="background-container">
+        <video autoplay muted loop playsinline id="video-background">
+            <source src="https://dm0qx8t0i9gc9.cloudfront.net/videos/video_files/100/524/301/480p/video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <div id="app">
+        <div id="intro-storyline">
+            <p id="story-text"></p>
+            <button id="skip-intro-btn" class="hidden" title="Skip Intro"><i class="fa-solid fa-forward"></i></button>
+        </div>
+
+        <div id="main-menu" class="hidden">
+            <div id="main-menu-logo">
+                <h1>Oaktale</h1>
+                <p class="tagline">A dark corruption spreads. The Great Oak is dying. A hero must rise.</p>
+            </div>
+            <nav id="main-menu-nav">
+                <button id="continue-btn">Continue Journey</button>
+                <button id="new-game-btn">New Game</button>
+            </nav>
+            <footer id="main-menu-footer">
+                <p>Version 0.1.0 Alpha</p>
+            </footer>
+        </div>
+
+        <div id="character-selection-screen" class="hidden">
+            <h2>Choose Your Hero</h2>
+            <p id="character-selection-intro">A dark corruption spreads from the heart of the woods, and the Great Oak is dying. As a hero of the realm, you must venture forth to cleanse the land, uncover the source of the blight, and restore Oaktale to its former glory.</p>
+            <div id="character-selection-cards">
+                <!-- Character selection cards will be rendered here -->
+            </div>
+            <button id="start-game-btn" disabled>Start Journey</button>
+        </div>
+
+        <div id="game-container" class="hidden">
+            <div id="character-panel">
+                <!-- Character cards and actions will be inserted here -->
+            </div>
+
+            <div id="main-content">
+                <div id="game-board">
+                    <div id="fog-container">
+                        <div class="fog-layer fog-1"></div>
+                        <div class="fog-layer fog-2"></div>
+                        <div class="fog-layer fog-3"></div>
+                    </div>
+                    <div id="pre-combat-display">
+                        <img id="town-background" class="hidden" src="https://ik.imagekit.io/montorneado/078f3e34966c7e24893541e40cf12f4c_jA8P4Cqs1.jpg?updatedAt=1760172577927" alt="A fantasy town street.">
+                        <img id="crossroads-background" class="hidden" src="https://ik.imagekit.io/montorneado/5a40589bfacfcb30026cff542c4f5e7b_Lua_3orFz.jpg?updatedAt=1760173250326" alt="A fantasy crossroads at dusk.">
+                        <div id="location-info">
+                            <h2 id="location-name"></h2>
+                            <p id="location-description"></p>
+                        </div>
+                        <div id="action-buttons">
+                           <!-- Exploration action buttons are rendered here -->
+                        </div>
+                        <div id="exploration-overlay" class="hidden">
+                            <div class="exploration-content">
+                                <h3 id="exploration-text">Exploring...</h3>
+                                <div class="walk-animation">
+                                    <span>.</span><span>.</span><span>.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="combat-display" class="hidden">
+                        <div id="player-combatant-card" class="combatant-hud"></div>
+                        <div id="pet-combatant-card" class="combatant-hud hidden"></div>
+                        <div id="enemy-combatant-card" class="combatant-hud"></div>
+                    </div>
+                     <div id="combat-controls-container" class="hidden">
+                        <!-- Combat action buttons are rendered here -->
+                    </div>
+                </div>
+
+                <div id="inventory-display" class="hidden">
+                    <div class="inventory-summary">
+                        <p><i class="fa-solid fa-coins"></i> Gold: <span id="gold-amount">0</span></p>
+                        <div id="items-list"></div>
+                    </div>
+                </div>
+
+                <div id="action-log">
+                    <p>Welcome! Select your character to begin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="shop-modal" class="modal-background hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Shop</h2>
+                <div id="shop-toggle-buttons"></div>
+            </div>
+            <div id="shop-items" class="modal-scrollable-content"></div>
+            <div class="modal-footer">
+                <button id="close-shop-btn">Leave Shop</button>
+            </div>
+        </div>
+    </div>
+
+     <div id="artisan-modal" class="modal-background hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                 <h2>Traveling Artisan</h2>
+            </div>
+            <p>"Greetings, traveler. Perhaps you have the materials for something special?"</p>
+            <div id="artisan-blueprints" class="modal-scrollable-content"></div>
+            <div class="modal-footer">
+                <button id="close-artisan-btn">Leave</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="combat-item-modal" class="modal-background hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Use Item</h2>
+            </div>
+            <div id="combat-items-list" class="modal-scrollable-content"></div>
+            <div class="modal-footer">
+                <button id="close-combat-item-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventory-modal" class="modal-background hidden">
+        <div class="modal-content inventory-modal-content">
+            <div class="modal-header">
+                <h2>Inventory</h2>
+            </div>
+            <div class="inventory-container">
+                <div class="inventory-list-section">
+                    <div id="inventory-item-list"></div>
+                </div>
+                <div class="inventory-details-section">
+                    <div class="equipment-slots">
+                        <h3><i class="fa-solid fa-user-shield"></i> Equipment</h3>
+                        <div class="slot" id="equip-slot-weapon"><i class="fa-solid fa-gavel"></i> Weapon: <span>None</span></div>
+                        <div class="slot" id="equip-slot-armor"><i class="fa-solid fa-shield-halved"></i> Armor: <span>None</span></div>
+                        <div class="slot" id="equip-slot-accessory"><i class="fa-solid fa-ring"></i> Accessory: <span>None</span></div>
+                    </div>
+                    <div id="item-details-pane" class="hidden">
+                        <h4 id="item-details-name"></h4>
+                        <p id="item-details-description"></p>
+                        <div id="item-details-stats"></div>
+                        <div id="item-details-actions"></div>
+                    </div>
+                     <div id="item-details-placeholder">
+                        <p>Select an item to see its details.</p>
+                    </div>
+                </div>
+            </div>
+             <div class="modal-footer">
+                <button id="close-inventory-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal-background hidden">
+        <div class="modal-content">
+            <p id="confirm-modal-text"></p>
+            <div class="confirm-modal-buttons">
+                <button id="confirm-yes-btn">Yes</button>
+                <button id="confirm-no-btn">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="info-modal" class="modal-background hidden">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h2 id="info-modal-title"></h2>
+             </div>
+            <p id="info-modal-text"></p>
+             <div class="modal-footer">
+                <button id="info-modal-close-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quest-giver-modal" class="modal-background hidden">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h2 id="quest-giver-name"></h2>
+             </div>
+            <p id="quest-giver-dialogue"></p>
+            <div id="quest-offer-details" class="hidden">
+                <h3>New Quest: <span id="quest-offer-title"></span></h3>
+                <p id="quest-offer-description"></p>
+                <h4>Objectives:</h4>
+                <ul id="quest-offer-objectives"></ul>
+                <h4>Rewards:</h4>
+                <p id="quest-offer-rewards"></p>
+            </div>
+             <div id="quest-modal-buttons" class="modal-footer">
+                <!-- Buttons will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="quest-log-modal" class="modal-background hidden">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h2>Quest Log</h2>
+             </div>
+            <div id="quest-log-list" class="modal-scrollable-content">
+                <!-- Quests will be rendered here -->
+            </div>
+             <div class="modal-footer">
+                <button id="close-quest-log-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-background hidden">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h2>Settings</h2>
+             </div>
+            <div class="settings-options">
+                <div class="settings-option">
+                    <label><i class="fa-solid fa-volume-high"></i> Sound</label>
+                    <button id="sound-toggle-btn">Sound: ON</button>
+                </div>
+                <div class="settings-option">
+                    <label><i class="fa-solid fa-scroll"></i> Action Log</label>
+                    <button id="clear-log-btn">Clear Log</button>
+                </div>
+                <div class="settings-option">
+                    <label><i class="fa-solid fa-save"></i> Game</label>
+                    <button id="modal-save-game-btn">Save Game</button>
+                </div>
+                 <div class="settings-option">
+                    <label><i class="fa-solid fa-upload"></i> Data</label>
+                    <button id="modal-import-game-btn">Import Game</button>
+                </div>
+                 <div class="settings-option">
+                    <label><i class="fa-solid fa-download"></i> Data</label>
+                    <button id="modal-export-game-btn">Export Game</button>
+                </div>
+                 <div class="settings-option">
+                    <label><i class="fa-solid fa-door-open"></i> Session</label>
+                    <button id="modal-quit-game-btn">Quit Game</button>
+                </div>
+            </div>
+             <div class="modal-footer">
+                <button id="close-settings-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="skill-tooltip" class="tooltip hidden">
+        <h4 id="skill-tooltip-name"></h4>
+        <p id="skill-tooltip-description"></p>
+    </div>
+
+     <div id="buff-tooltip" class="tooltip hidden">
+        <h4 id="buff-tooltip-name"></h4>
+        <p id="buff-tooltip-description"></p>
+    </div>
+
+    <audio id="background-music" loop preload="auto">
+        <source src="https://upcdn.io/kW2K8br/raw/2025-06-17_Monster_Heat_-_www.FesliyanStudios.com_David_Fesliyan.mp3" type="audio/mpeg">
+    </audio>
+
+    <input type="file" id="import-file-input" class="hidden" accept=".json, .oak">
+
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>

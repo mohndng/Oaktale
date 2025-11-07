@@ -1,3 +1,5 @@
+import * as dom from './dom';
+
 // --- CONSTANTS ---
 export const SOUNDS = {
     CLICK: { type: 'sine', frequency: 440, duration: 0.1 },
@@ -12,6 +14,44 @@ export const SOUNDS = {
     STUN: { type: 'square', frequency: [440, 220], duration: 0.3 },
     SHIELD: { type: 'sine', frequency: 880, duration: 0.2 },
 } as const;
+
+const NORMAL_MUSIC_VOLUME = 0.3;
+const COMBAT_MUSIC_VOLUME = 0.1;
+
+
+// --- MUSIC MANAGER ---
+class MusicManager {
+    private audioElement: HTMLAudioElement | null = null;
+    private isInitialized = false;
+
+    public initialize() {
+        if (this.isInitialized) return;
+        this.audioElement = dom.backgroundMusic;
+        this.audioElement.volume = NORMAL_MUSIC_VOLUME;
+        this.isInitialized = true;
+    }
+
+    public play() {
+        if (!this.isInitialized || !this.audioElement) return;
+        this.audioElement.play().catch(error => {
+            // This is expected if the user hasn't interacted with the page yet.
+            // The userInteractionListener will handle starting it.
+            console.warn("Background music auto-play was prevented. It will start on user interaction.", error);
+        });
+    }
+
+    public setMuted(muted: boolean) {
+        if (!this.isInitialized || !this.audioElement) return;
+        this.audioElement.muted = muted;
+    }
+
+    public adjustVolumeForCombat(inCombat: boolean) {
+        if (!this.isInitialized || !this.audioElement) return;
+        this.audioElement.volume = inCombat ? COMBAT_MUSIC_VOLUME : NORMAL_MUSIC_VOLUME;
+    }
+}
+
+export const musicManager = new MusicManager();
 
 
 // --- SOUND MANAGER ---
@@ -41,6 +81,7 @@ class SoundManager {
     public setSoundEnabled(enabled: boolean) {
         this.isEnabled = enabled;
         localStorage.setItem('oaktaleSoundEnabled', enabled ? 'true' : 'false');
+        musicManager.setMuted(!enabled);
     }
 
     public play(sound: { type: OscillatorType; frequency: number | readonly number[]; duration: number; }) {
@@ -75,6 +116,11 @@ class SoundManager {
     public userInteractionListener = () => {
         const initAudio = async () => {
             await this.initialize();
+            
+            musicManager.initialize();
+            musicManager.setMuted(!this.isEnabled);
+            musicManager.play();
+
             window.removeEventListener('click', initAudio);
             window.removeEventListener('keydown', initAudio);
         };

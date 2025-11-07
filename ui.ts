@@ -148,13 +148,12 @@ export function showDamagePopup(targetElementId: string, text: string, type: 'da
 
 // --- RENDERING ---
 
-export function renderCharacterSelection(characters: Character[], onSelect: (name: CharacterClass) => void, onGeneratePortrait: (className: CharacterClass, cardElement: HTMLElement) => void) {
+export function renderCharacterSelection(characters: Character[], onSelect: (name: CharacterClass) => void) {
     dom.characterSelectionCards.innerHTML = characters.map(char => {
         const classData = CLASS_DATA[char.name];
         return `
         <div class="selection-card" data-char-name="${char.name}">
-            <button class="generate-portrait-btn" title="Generate New Portrait"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
-            <div class="character-portrait" data-portrait-container="true">${char.portrait}</div>
+            <div class="character-portrait" data-portrait-container="true"><img src="${char.imageUrl}" alt="${char.name}"></div>
             <h3>${char.name}</h3>
             <p class="character-description">${classData.description}</p>
             <div class="passive-skill">
@@ -166,42 +165,13 @@ export function renderCharacterSelection(characters: Character[], onSelect: (nam
     
     dom.characterSelectionCards.querySelectorAll('.selection-card').forEach(cardEl => {
         const card = cardEl as HTMLElement;
-        card.addEventListener('click', (e) => {
-             if ((e.target as HTMLElement).closest('.generate-portrait-btn')) {
-                return;
-            }
+        card.addEventListener('click', () => {
             dom.characterSelectionCards.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             const selectedName = card.dataset.charName as CharacterClass;
             onSelect(selectedName);
         });
-
-        const genBtn = card.querySelector('.generate-portrait-btn') as HTMLButtonElement;
-        genBtn.addEventListener('click', () => {
-            onGeneratePortrait(card.dataset.charName as CharacterClass, card);
-        });
     });
-}
-
-export function setPortraitLoadingState(cardElement: HTMLElement, isLoading: boolean) {
-    const btn = cardElement.querySelector('.generate-portrait-btn') as HTMLButtonElement;
-    const icon = btn.querySelector('i') as HTMLElement;
-    const portraitContainer = cardElement.querySelector('[data-portrait-container]') as HTMLElement;
-
-    if (isLoading) {
-        btn.disabled = true;
-        icon.className = 'fa-solid fa-spinner';
-        const overlay = document.createElement('div');
-        overlay.className = 'portrait-loading-overlay';
-        portraitContainer.appendChild(overlay);
-    } else {
-        btn.disabled = false;
-        icon.className = 'fa-solid fa-wand-magic-sparkles';
-        const overlay = portraitContainer.querySelector('.portrait-loading-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-    }
 }
 
 
@@ -247,7 +217,7 @@ function renderPlayerCombatant(player: Character) {
         <div class="damage-popup-container"></div>
         <div class="combatant-hud-content">
             <div class="combatant-portrait-wrapper">
-                ${player.portrait.replace('<img', '<img class="combatant-portrait-img"')}
+                <img src="${player.imageUrl}" alt="${player.name}" class="combatant-portrait-img">
             </div>
             <div class="combatant-info">
                 <h3>${player.name}</h3>
@@ -297,7 +267,7 @@ function renderEnemyCombatant(enemy: Enemy) {
                 <div class="buff-container"></div>
             </div>
             <div class="combatant-portrait-wrapper" style="--rank-color: ${rankColor};">
-                 ${enemy.portrait.replace('<img', '<img class="combatant-portrait-img"')}
+                 <img src="${enemy.imageUrl}" alt="${enemy.name}" class="combatant-portrait-img">
             </div>
         </div>
     `;
@@ -559,6 +529,7 @@ export function renderInventoryList(player: Character, onSelect: (id: string) =>
                 const itemClass = `item-name-${item.type.replace(/\s/g, '')}`;
                 return `
                 <div class="inventory-item" data-item-id="${item.id}">
+                    <img src="${item.imageUrl}" alt="${item.name}" class="item-icon">
                     <span class="${itemClass}">${item.name}</span>
                     <span> (x${player.inventory[item.id]})</span>
                 </div>
@@ -590,7 +561,9 @@ export function renderItemDetails(player: Character, itemId: string, onEquip: (i
     const descEl = dom.getElement('item-details-description');
     const statsEl = dom.getElement('item-details-stats');
     const actionsEl = dom.getElement('item-details-actions');
+    const iconEl = dom.getElement('item-details-icon');
     
+    iconEl.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}">`;
     nameEl.textContent = item.name;
     nameEl.style.color = RARITY_DATA[item.rarity].color;
     descEl.textContent = item.description;

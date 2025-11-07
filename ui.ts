@@ -890,6 +890,61 @@ export function openQuestLogModal(player: Character) {
     modal.classList.remove('hidden');
 }
 
+export async function preloadAssets(onComplete: () => void) {
+    const imageUrls = new Set<string>();
+
+    // Gather image URLs from all data sources
+    Object.values(CLASS_DATA).forEach(c => c.imageUrl && imageUrls.add(c.imageUrl));
+    Object.values(ITEMS).forEach(i => i.imageUrl && imageUrls.add(i.imageUrl));
+    Object.values(ENEMIES).forEach(e => e.imageUrl && imageUrls.add(e.imageUrl));
+
+    const promises: Promise<any>[] = [];
+    const totalAssets = imageUrls.size;
+    let loadedAssets = 0;
+
+    const progressBar = dom.getElement('progress-bar');
+    const loadingMessage = dom.getElement('loading-message');
+
+    if (totalAssets === 0) {
+        onComplete();
+        return;
+    }
+
+    imageUrls.forEach(url => {
+        const promise = new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                loadedAssets++;
+                const progress = (loadedAssets / totalAssets) * 100;
+                progressBar.style.width = `${progress}%`;
+                loadingMessage.textContent = `Loading ${loadedAssets} / ${totalAssets}...`;
+                resolve(img);
+            };
+            img.onerror = () => {
+                console.warn(`Failed to load image: ${url}`);
+                loadedAssets++; // Still count it as "loaded" to not stall the progress bar
+                const progress = (loadedAssets / totalAssets) * 100;
+                progressBar.style.width = `${progress}%`;
+                loadingMessage.textContent = `Loading ${loadedAssets} / ${totalAssets}...`;
+                resolve(null); // Resolve with null on error so Promise.all doesn't fail
+            };
+            img.src = url;
+        });
+        promises.push(promise);
+    });
+
+    await Promise.all(promises);
+
+    loadingMessage.textContent = 'All assets loaded!';
+
+    // Short delay to show completion before fading out
+    setTimeout(() => {
+        dom.getElement('preloading-screen').classList.add('hidden');
+        dom.getElement('intro-storyline').classList.remove('hidden');
+        onComplete();
+    }, 500);
+}
+
 export function openSettingsModal(onClearLog: () => void, onSave: () => void, onQuit: () => void, onImport: () => void, onExport: () => void) {
     dom.soundToggleBtn.textContent = `Sound: ${soundManager.isSoundEnabled() ? 'On' : 'Off'}`;
     dom.soundToggleBtn.onclick = () => {

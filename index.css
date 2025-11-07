@@ -1914,6 +1914,46 @@ button:disabled {
         transform: translateY(-50%);
         right: 40px;
     }
+/* Preloading Screen */
+#preloading-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    width: 100%;
+    padding: 2rem;
+}
+
+#preloading-screen h2 {
+    margin-bottom: 2rem;
+}
+
+#progress-bar-container {
+    width: 100%;
+    max-width: 400px;
+    height: 20px;
+    background-color: var(--card-bg-light);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease-in-out;
+}
+
+#loading-message {
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+    height: 1.2em; /* Reserve space to prevent layout shift */
+}
+
     .combatant-portrait-wrapper {
         width: 80px;
         height: 80px;

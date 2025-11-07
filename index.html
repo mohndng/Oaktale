@@ -26,7 +26,15 @@
         </video>
     </div>
     <div id="app">
-        <div id="intro-storyline">
+        <div id="preloading-screen">
+            <h2>Generating Assets...</h2>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <p id="loading-message"></p>
+        </div>
+
+        <div id="intro-storyline" class="hidden">
             <p id="story-text"></p>
             <button id="skip-intro-btn" class="hidden" title="Skip Intro"><i class="fa-solid fa-forward"></i></button>
         </div>

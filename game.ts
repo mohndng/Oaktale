@@ -354,6 +354,7 @@ function createCharacter(className: CharacterClass) {
     const character: Character = {
         name: className,
         portrait: classData.portrait,
+        imageUrl: classData.imageUrl,
         level,
         xp: 0,
         xpToNextLevel,

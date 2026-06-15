@@ -318,15 +318,25 @@ function renderCombatControls(player: Character, onAttack: () => void, onSkill: 
         .filter(Boolean) as Skill[];
     
     dom.combatControlsContainer.innerHTML = `
-        <button id="attack-btn">Attack</button>
+        <button id="attack-btn" class="combat-main-btn flex items-center justify-between gap-2">
+            <span class="btn-emoji">⚔️</span>
+            <span class="btn-label">ATTACK</span>
+        </button>
         ${availableSkills.map(skill => {
             const hasEnoughResource = player.resourceType === 'Mana'
                 ? !skill.mpCost || (player.mp! >= skill.mpCost)
                 : true; // Assuming non-mana skills are always usable if player can act
-            const buttonText = skill.mpCost ? `${skill.name} (${skill.mpCost})` : skill.name;
-            return `<button class="skill-btn" data-skill-id="${skill.id}" ${hasEnoughResource ? '' : 'disabled'}>${buttonText}</button>`;
+            return `
+            <button class="skill-btn flex items-center justify-between gap-3" data-skill-id="${skill.id}" ${hasEnoughResource ? '' : 'disabled'}>
+                <span class="skill-name-label">🔮 ${skill.name}</span>
+                ${skill.mpCost ? `<span class="skill-mp-cost-pill">${skill.mpCost} MP</span>` : ''}
+            </button>
+            `;
         }).join('')}
-        <button id="item-btn">Item</button>
+        <button id="item-btn" class="combat-main-btn flex items-center justify-between gap-2">
+            <span class="btn-emoji">🎒</span>
+            <span class="btn-label">USE BAG</span>
+        </button>
     `;
 
     dom.getElement('attack-btn').onclick = onAttack;
@@ -367,33 +377,54 @@ export function renderCharacterPanel(player: Character, onOpenInventory: () => v
     const title = getCharacterTitle(player);
     const newSkillClass = char.hasNewSkill ? 'new-skill-glow' : '';
 
-    let statsLine = `Lvl ${char.level} | HP: ${char.hp}/${char.maxHp} | ATK: ${char.atk}`;
-    if (char.resourceType === 'Mana' && char.mp !== undefined && char.maxMp !== undefined) {
-        statsLine = `Lvl ${char.level} | HP: ${char.hp}/${char.maxHp} | MP: ${char.mp}/${char.maxMp} | ATK: ${char.atk}`;
-    }
-
     const petInfo = char.pet 
-        ? `<p class="character-pet-info" style="color:${RARITY_DATA[char.pet.rarity].color}; font-weight: 600;">${char.pet.name} (Lvl ${char.pet.level})</p>` 
-        : `<p class="character-pet-info" style="color:var(--secondary-text);">No active pet</p>`;
+        ? `<div class="character-pet-row" style="color:${RARITY_DATA[char.pet.rarity].color}; font-weight: 600;">🐾 ${char.pet.name} <span class="pet-level">Lvl ${char.pet.level}</span></div>` 
+        : `<div class="character-pet-row" style="color:var(--secondary-text); opacity: 0.7;">No companion active</div>`;
 
     dom.characterPanel.innerHTML = `
         <div class="character-card selected ${newSkillClass}" id="player-character-card" data-char-name="${char.name}">
-            <button class="character-card-quest-btn" id="quest-log-btn" title="Quest Log">
-                ${icon('Book', '#cbd5e1', 1.5)}
-            </button>
-            <button class="character-card-settings-btn" id="settings-btn" title="Settings">
-                ${icon('Settings', '#cbd5e1', 1.5)}
-            </button>
+            <div class="character-card-actions-shelf">
+                <button class="character-card-quest-btn" id="quest-log-btn" title="Quest Log">
+                    ${icon('Book', '#cbd5e1', 1.5)}
+                    <span class="btn-tooltip">Quest Tracker</span>
+                </button>
+                <button class="character-card-settings-btn" id="settings-btn" title="Settings">
+                    ${icon('Settings', '#cbd5e1', 1.5)}
+                    <span class="btn-tooltip">Settings Menu</span>
+                </button>
+            </div>
             <div class="character-portrait" style="border-color: ${title.borderColor};" title="Open Inventory">${char.portrait}</div>
             <div class="character-card-info" title="Open Inventory">
-                <h3 class="character-role-title" style="color: ${title.borderColor};">${title.name}</h3>
-                <h3>${char.name}</h3>
-                <p>${statsLine}</p>
+                <h3 class="character-role-title animate-pulse-slow" style="color: ${title.borderColor}; text-shadow: 0 0 10px ${title.borderColor}33;">${title.name}</h3>
+                <h3 class="character-name-header">${char.name}</h3>
+                
+                <div class="character-stats-grid">
+                    <div class="stat-grid-item">
+                        <span class="item-label">LVL</span>
+                        <span class="item-value font-mono text-purple-300 font-semibold">${char.level}</span>
+                    </div>
+                    <div class="stat-grid-item">
+                        <span class="item-label">HP</span>
+                        <span class="item-value font-mono text-red-400 font-semibold">${char.hp}/${char.maxHp}</span>
+                    </div>
+                    ${char.resourceType === 'Mana' && char.mp !== undefined && char.maxMp !== undefined ? `
+                    <div class="stat-grid-item">
+                        <span class="item-label">MP</span>
+                        <span class="item-value font-mono text-blue-400 font-semibold">${char.mp}/${char.maxMp}</span>
+                    </div>
+                    ` : ''}
+                    <div class="stat-grid-item">
+                        <span class="item-label">ATK</span>
+                        <span class="item-value font-mono text-amber-500 font-semibold">${char.atk}</span>
+                    </div>
+                </div>
+
                 ${petInfo}
-                <div class="character-equipped">
-                    <span>W: ${weaponName}</span>
-                    <span>A: ${armorName}</span>
-                    <span>Acc: ${accessoryName}</span>
+                
+                <div class="character-equipped-inventory">
+                    <span class="equip-chip" title="Weapon: ${weaponName}"><span class="chip-icon">⚔️</span> ${char.equipment.Weapon ? char.equipment.Weapon.name : 'No Weapon'}</span>
+                    <span class="equip-chip" title="Armor: ${armorName}"><span class="chip-icon">🛡️</span> ${char.equipment.Armor ? char.equipment.Armor.name : 'No Armor'}</span>
+                    <span class="equip-chip" title="Accessory: ${accessoryName}"><span class="chip-icon">💍</span> ${char.equipment.Accessory ? char.equipment.Accessory.name : 'No Accessory'}</span>
                 </div>
             </div>
         </div>

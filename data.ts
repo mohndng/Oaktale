@@ -1,12 +1,42 @@
 
-
-
 // FIX: Imported the 'Buff' type from './types' to resolve a type error.
 import { Character, CharacterClass, Skill, Title, PassiveSkill, Item, Equipment, SkillTome, ItemRarity, Enemy, EnemyType, EnemyRank, Blueprint, Quest, QuestObjective, ExplorationEvent, GameLocation, Pet, PetEgg, Buff } from './types';
 import { applyDamage, calculateDamage, dealPlayerDamage } from './game';
 import * as ui from './ui';
 import { soundManager } from './sound';
 import { SOUNDS } from './sound';
+import * as lucide from 'lucide';
+
+// Helper to generate SVG string
+export const icon = (name: keyof typeof lucide.icons, color: string = '#cbd5e1', strokeWidth: number = 1.5) => {
+    const iconData = lucide.icons[name];
+    if (!iconData) return '';
+    
+    // Lucide icon data is an array: [tag, attrs, children]
+    const createSvgString = (data: any): string => {
+        if (!Array.isArray(data)) return '';
+        const [tag, attrs, children] = data;
+        
+        let attrStr = '';
+        for (const [key, value] of Object.entries(attrs || {})) {
+            attrStr += ` ${key}="${value}"`;
+        }
+        
+        // Override color and stroke-width on the root svg
+        if (tag === 'svg') {
+            attrStr += ` stroke="${color}" stroke-width="${strokeWidth}" width="64" height="64"`;
+        }
+        
+        let childrenStr = '';
+        if (Array.isArray(children)) {
+            childrenStr = children.map(createSvgString).join('');
+        }
+        
+        return `<${tag}${attrStr}>${childrenStr}</${tag}>`;
+    };
+
+    return createSvgString(iconData);
+};
 
 export const TOWN_NAME_PREFIXES = ['Oak', 'Stone', 'River', 'Shadow', 'Iron', 'Silver', 'Dragon', 'Whisper'];
 export const TOWN_NAME_SUFFIXES = ['haven', 'watch', 'bend', 'creek', 'fall', 'crest', 'wood', 'dale'];
@@ -23,7 +53,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     armoredWarhound: {
         name: 'Armored Warhound',
         rarity: 'Uncommon',
-        portrait: `<svg viewBox="0 0 100 100"><path d="M50 30 C 40 20, 20 40, 30 60 L 50 80 L 70 60 C 80 40, 60 20, 50 30 Z" fill="#A9A9A9"/><path d="M40 50 H 60 M 45 60 V 70 M 55 60 V 70" stroke="#696969" stroke-width="4"/><circle cx="45" cy="45" r="3" fill="black"/><circle cx="55" cy="45" r="3" fill="black"/></svg>`,
+        portrait: icon('Shield', '#4ade80'),
         baseAtk: 6,
         skill: {
             id: 'hound_guard', name: 'Guard', chance: 0.3,
@@ -39,7 +69,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     shadowPanther: {
         name: 'Shadow Panther',
         rarity: 'Rare',
-        portrait: `<svg viewBox="0 0 100 100"><path d="M20 70 C 30 50, 70 50, 80 70 Q 50 60, 20 70" fill="#2F4F4F"/><path d="M40 60 Q 50 50, 60 60" stroke="#9370DB" stroke-width="3" fill="none"/><circle cx="40" cy="55" r="4" fill="#9370DB"/><circle cx="60" cy="55" r="4" fill="#9370DB"/></svg>`,
+        portrait: icon('Cat', '#60a5fa'),
         baseAtk: 8,
         skill: {
             id: 'panther_pounce', name: 'Pounce', chance: 0.4,
@@ -53,7 +83,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     arcaneFamiliar: {
         name: 'Arcane Familiar',
         rarity: 'Uncommon',
-        portrait: `<svg viewBox="0 0 100 100"><path d="M50 20 C 30 40, 30 70, 50 80 C 70 70, 70 40, 50 20" fill="#60a5fa" opacity="0.7"/><circle cx="50" cy="50" r="5" fill="white"/></svg>`,
+        portrait: icon('Sparkles', '#4ade80'),
         baseAtk: 4,
         skill: {
             id: 'familiar_bolt', name: 'Arcane Bolt', chance: 0.5,
@@ -72,7 +102,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     wolfCompanion: {
         name: 'Wolf Companion',
         rarity: 'Common',
-        portrait: `<svg viewBox="0 0 100 100"><path d="M50 20 L70 40 L60 60 L50 50 L40 60 L30 40 Z M50 50 L50 80 M40 75 L60 75" stroke="#ccc" stroke-width="4" fill="none"/><path d="M45 35 Q50 30 55 35" stroke="#ccc" stroke-width="3" fill="none"/></svg>`,
+        portrait: icon('Dog', '#cbd5e1'),
         baseAtk: 5,
         skill: {
             id: 'wolf_rend', name: 'Rend', chance: 0.3,
@@ -87,7 +117,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     griffonHatchling: {
         name: 'Griffon Hatchling',
         rarity: 'Rare',
-        portrait: `<svg viewBox="0 0 100 100"><path d="M30 70 Q 50 50 70 70 C 60 80, 40 80, 30 70" fill="#DAA520"/><path d="M40 40 L 60 40 L 50 20 Z" fill="#F0E68C"/><circle cx="45" cy="45" r="3" fill="black"/><circle cx="55" cy="45" r="3" fill="black"/></svg>`,
+        portrait: icon('Bird', '#60a5fa'),
         baseAtk: 7,
         skill: {
             id: 'griffon_swoop', name: 'Swoop', chance: 0.35,
@@ -106,7 +136,7 @@ export const PET_DATA: { [id: string]: Omit<Pet, 'level' | 'xp' | 'xpToNextLevel
     spiritWisp: {
         name: 'Spirit Wisp',
         rarity: 'Epic',
-        portrait: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="rgba(173, 216, 230, 0.7)"><animate attributeName="r" values="20;25;20" dur="3s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="10" fill="white"/></svg>`,
+        portrait: icon('Flame', '#c084fc'),
         baseAtk: 10,
         skill: {
             id: 'wisp_echo', name: 'Echoing Blast', chance: 0.5,
@@ -550,17 +580,17 @@ export const LOCATIONS: { [key in GameLocation]: { name: string; description: st
 
 export const ENEMIES: { [id: string]: Enemy } = {
     // Woods
-    wolf: { id: 'wolf', name: 'Wolf', portrait: `<img src="https://ik.imagekit.io/montorneado/wolf_3_Vl-n3Qn_.png?updatedAt=1720612140411" alt="Wolf">`, type: 'Beast', rank: 'Normal', level: 1, hp: 20, maxHp: 20, atk: 5, xpValue: 10, drops: { gold: 5, items: [{ itemId: 'wolfPelt', chance: 0.3 }] }, buffs: [], shield: 0 },
-    goblinScout: { id: 'goblinScout', name: 'Goblin Scout', portrait: `<img src="https://ik.imagekit.io/montorneado/goblin_2_yVw1dG56d.png?updatedAt=1720612140156" alt="Goblin Scout">`, type: 'Goblin', rank: 'Normal', level: 2, hp: 25, maxHp: 25, atk: 6, xpValue: 15, drops: { gold: 8, items: [{ itemId: 'healthPotion', chance: 0.1 }, {itemId: 'goblinEar', chance: 0.5}] }, buffs: [], shield: 0 },
-    goblinShaman: { id: 'goblinShaman', name: 'Goblin Shaman', portrait: `<img src="https://ik.imagekit.io/montorneado/goblin_shaman_3_4V16W2P-q.png?updatedAt=1720612140149" alt="Goblin Shaman">`, type: 'Goblin', rank: 'Epic', level: 4, hp: 70, maxHp: 70, atk: 8, skill: { name: 'Heal', action: (e, p) => { e.hp = Math.min(e.maxHp, e.hp + 15); return `${e.name} chants and heals for 15 HP!`; } }, xpValue: 50, drops: { gold: 30, items: [{ itemId: 'enchantedStaff', chance: 0.1 }, {itemId: 'glimmeringDust', chance: 0.3}] }, buffs: [], shield: 0 },
+    wolf: { id: 'wolf', name: 'Wolf', portrait: icon('Dog', '#a8a29e'), type: 'Beast', rank: 'Normal', level: 1, hp: 20, maxHp: 20, atk: 5, xpValue: 10, drops: { gold: 5, items: [{ itemId: 'wolfPelt', chance: 0.3 }] }, buffs: [], shield: 0 },
+    goblinScout: { id: 'goblinScout', name: 'Goblin Scout', portrait: icon('UserRoundX', '#4ade80'), type: 'Goblin', rank: 'Normal', level: 2, hp: 25, maxHp: 25, atk: 6, xpValue: 15, drops: { gold: 8, items: [{ itemId: 'healthPotion', chance: 0.1 }, {itemId: 'goblinEar', chance: 0.5}] }, buffs: [], shield: 0 },
+    goblinShaman: { id: 'goblinShaman', name: 'Goblin Shaman', portrait: icon('UserRoundX', '#c084fc'), type: 'Goblin', rank: 'Epic', level: 4, hp: 70, maxHp: 70, atk: 8, skill: { name: 'Heal', action: (e, p) => { e.hp = Math.min(e.maxHp, e.hp + 15); return `${e.name} chants and heals for 15 HP!`; } }, xpValue: 50, drops: { gold: 30, items: [{ itemId: 'enchantedStaff', chance: 0.1 }, {itemId: 'glimmeringDust', chance: 0.3}] }, buffs: [], shield: 0 },
     // Cave
-    giantBat: { id: 'giantBat', name: 'Giant Bat', portrait: `<img src="https://ik.imagekit.io/montorneado/bat_1_0_S3qg9iB.png?updatedAt=1720612139470" alt="Giant Bat">`, type: 'Beast', rank: 'Normal', level: 3, hp: 35, maxHp: 35, atk: 8, xpValue: 20, drops: { gold: 10, items: [{ itemId: 'batWing', chance: 0.3 }] }, buffs: [], shield: 0 },
-    giantSpider: { id: 'giantSpider', name: 'Giant Spider', portrait: `<img src="https://ik.imagekit.io/montorneado/spider_3_8B1A_n7bZ.png?updatedAt=1720612140328" alt="Giant Spider">`, type: 'Beast', rank: 'Normal', level: 4, hp: 40, maxHp: 40, atk: 10, skill: { name: 'Poison Bite', action: (e, p) => { p.buffs.push({ id: 'poison', name: 'Poisoned', duration: 3, value: 3 }); return `${e.name} sinks its fangs in, poisoning you!`; } }, xpValue: 25, drops: { gold: 12, items: [{ itemId: 'spiderSilk', chance: 0.25 }] }, buffs: [], shield: 0 },
-    orcBrute: { id: 'orcBrute', name: 'Orc Brute', portrait: `<img src="https://ik.imagekit.io/montorneado/orc_brute_2_lR5_jGqgT.png?updatedAt=1720612140268" alt="Orc Brute">`, type: 'Orc', rank: 'Epic', level: 6, hp: 120, maxHp: 120, atk: 15, skill: { name: 'Smash', action: (e, p) => { const damage = applyDamage(p, calculateDamage(e, p, e.atk * 1.5)); return `${e.name} uses Smash, dealing ${damage.damageDealt} damage!`; } }, xpValue: 80, drops: { gold: 50, items: [{ itemId: 'ironMace', chance: 0.15 }, {itemId: 'orcTusk', chance: 0.4}] }, buffs: [], shield: 0 },
+    giantBat: { id: 'giantBat', name: 'Giant Bat', portrait: icon('Bird', '#a8a29e'), type: 'Beast', rank: 'Normal', level: 3, hp: 35, maxHp: 35, atk: 8, xpValue: 20, drops: { gold: 10, items: [{ itemId: 'batWing', chance: 0.3 }] }, buffs: [], shield: 0 },
+    giantSpider: { id: 'giantSpider', name: 'Giant Spider', portrait: icon('Bug', '#ef4444'), type: 'Beast', rank: 'Normal', level: 4, hp: 40, maxHp: 40, atk: 10, skill: { name: 'Poison Bite', action: (e, p) => { p.buffs.push({ id: 'poison', name: 'Poisoned', duration: 3, value: 3 }); return `${e.name} sinks its fangs in, poisoning you!`; } }, xpValue: 25, drops: { gold: 12, items: [{ itemId: 'spiderSilk', chance: 0.25 }] }, buffs: [], shield: 0 },
+    orcBrute: { id: 'orcBrute', name: 'Orc Brute', portrait: icon('UserX', '#ef4444'), type: 'Orc', rank: 'Epic', level: 6, hp: 120, maxHp: 120, atk: 15, skill: { name: 'Smash', action: (e, p) => { const damage = applyDamage(p, calculateDamage(e, p, e.atk * 1.5)); return `${e.name} uses Smash, dealing ${damage.damageDealt} damage!`; } }, xpValue: 80, drops: { gold: 50, items: [{ itemId: 'ironMace', chance: 0.15 }, {itemId: 'orcTusk', chance: 0.4}] }, buffs: [], shield: 0 },
     // Ruins
-    skeleton: { id: 'skeleton', name: 'Skeleton', portrait: `<img src="https://ik.imagekit.io/montorneado/skeleton_2_7eN_dG_c1.png?updatedAt=1720612140222" alt="Skeleton">`, type: 'Undead', rank: 'Normal', level: 5, hp: 50, maxHp: 50, atk: 12, xpValue: 30, drops: { gold: 15, items: [{ itemId: 'ancientCoin', chance: 0.2 }] }, buffs: [], shield: 0 },
-    ghost: { id: 'ghost', name: 'Ghost', portrait: `<img src="https://ik.imagekit.io/montorneado/ghost_1_D9q_xM5yJ.png?updatedAt=1720612140134" alt="Ghost">`, type: 'Undead', rank: 'Normal', level: 6, hp: 45, maxHp: 45, atk: 14, skill: { name: 'Horrify', action: (e, p) => { p.buffs.push({ id: 'attack_down', name: 'Horrified', duration: 2, value: 0.25 }); return `${e.name}'s horrifying visage weakens your resolve!`; } }, xpValue: 35, drops: { gold: 18, items: [{ itemId: 'ectoplasm', chance: 0.25 }] }, buffs: [], shield: 0 },
-    lichApprentice: { id: 'lichApprentice', name: 'Lich Apprentice', portrait: `<img src="https://ik.imagekit.io/montorneado/lich_1_hWlT-Gqq4.png?updatedAt=1720612140217" alt="Lich Apprentice">`, type: 'Undead', rank: 'Epic', level: 8, hp: 150, maxHp: 150, atk: 20, skill: { name: 'Summon Skeleton', action: (e, p) => { return `${e.name} chants an dark incantation, but it fails... for now.`; } }, xpValue: 120, drops: { gold: 100, items: [{ itemId: 'tomeOfPowerStrike', chance: 0.1 }, {itemId: 'corruptedEssence', chance: 0.2}] }, buffs: [], shield: 0 },
+    skeleton: { id: 'skeleton', name: 'Skeleton', portrait: icon('Skull', '#cbd5e1'), type: 'Undead', rank: 'Normal', level: 5, hp: 50, maxHp: 50, atk: 12, xpValue: 30, drops: { gold: 15, items: [{ itemId: 'ancientCoin', chance: 0.2 }] }, buffs: [], shield: 0 },
+    ghost: { id: 'ghost', name: 'Ghost', portrait: icon('Ghost', '#93c5fd'), type: 'Undead', rank: 'Normal', level: 6, hp: 45, maxHp: 45, atk: 14, skill: { name: 'Horrify', action: (e, p) => { p.buffs.push({ id: 'attack_down', name: 'Horrified', duration: 2, value: 0.25 }); return `${e.name}'s horrifying visage weakens your resolve!`; } }, xpValue: 35, drops: { gold: 18, items: [{ itemId: 'ectoplasm', chance: 0.25 }] }, buffs: [], shield: 0 },
+    lichApprentice: { id: 'lichApprentice', name: 'Lich Apprentice', portrait: icon('UserX', '#c084fc'), type: 'Undead', rank: 'Epic', level: 8, hp: 150, maxHp: 150, atk: 20, skill: { name: 'Summon Skeleton', action: (e, p) => { return `${e.name} chants an dark incantation, but it fails... for now.`; } }, xpValue: 120, drops: { gold: 100, items: [{ itemId: 'tomeOfPowerStrike', chance: 0.1 }, {itemId: 'corruptedEssence', chance: 0.2}] }, buffs: [], shield: 0 },
 };
 
 export const BLUEPRINTS: Blueprint[] = [
@@ -626,7 +656,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     // TIER 1 CLASSES
     Warrior: {
         description: "A stalwart defender, clad in heavy armor and wielding mighty weapons.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/warrior_1_uO5_Vf-gM.png?updatedAt=1720612140417" alt="Warrior">',
+        portrait: icon('Sword', '#cbd5e1'),
         baseHp: 100,
         baseAtk: 10,
         passiveSkill: {
@@ -656,7 +686,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Mage: {
         description: "A master of the arcane arts, able to unleash devastating elemental spells.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/mage_1_d-qE2f5j3.png?updatedAt=1720612140232" alt="Mage">',
+        portrait: icon('Zap', '#93c5fd'),
         baseHp: 70,
         baseAtk: 8,
         baseMp: 50,
@@ -689,7 +719,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Assassin: {
         description: "A deadly rogue who strikes from the shadows, exploiting enemy weaknesses.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/assassin_3_J7hjdG5k2.png?updatedAt=1720612139417" alt="Assassin">',
+        portrait: icon('Skull', '#cbd5e1'),
         baseHp: 80,
         baseAtk: 12,
         passiveSkill: {
@@ -718,7 +748,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Hunter: {
         description: "A master of the wild, accompanied by a loyal beast companion and skilled with a bow.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/hunter_1_W4r_eGcgN.png?updatedAt=1720612140130" alt="Hunter">',
+        portrait: icon('Crosshair', '#4ade80'),
         baseHp: 85,
         baseAtk: 11,
         passiveSkill: {
@@ -745,7 +775,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     // TIER 2 CLASSES
     Paladin: {
         description: "A holy warrior who blends martial prowess with divine magic to protect and heal.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/paladin_1_tVdFqG5k1.png?updatedAt=1720612140226" alt="Paladin">',
+        portrait: icon('Shield', '#facc15'),
         baseHp: 110,
         baseAtk: 9,
         baseMp: 30,
@@ -777,7 +807,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Necromancer: {
         description: "A wielder of dark magic who commands the dead and siphons life from their foes.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/necromancer_3_85yPdGq51.png?updatedAt=1720612140224" alt="Necromancer">',
+        portrait: icon('Ghost', '#a8a29e'),
         baseHp: 75,
         baseAtk: 9,
         baseMp: 45,
@@ -807,7 +837,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Druid: {
         description: "A guardian of nature, able to shapeshift and call upon the wild's fury.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/druid_1_c84G9f5ke.png?updatedAt=1720612140131" alt="Druid">',
+        portrait: icon('Leaf', '#4ade80'),
         baseHp: 90,
         baseAtk: 10,
         baseMp: 35,
@@ -837,7 +867,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Monk: {
         description: "A disciplined warrior who uses their body as a weapon, channeling inner energy for swift strikes.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/monk_1_oDd45G9i7.png?updatedAt=1720612140161" alt="Monk">',
+        portrait: icon('Hand', '#facc15'),
         baseHp: 85,
         baseAtk: 11,
         passiveSkill: {
@@ -869,7 +899,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     // TIER 3 CLASSES
     Bard: {
         description: "A charismatic performer whose music can inspire allies and demoralize foes.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/bard_1_7F315M9s3.png?updatedAt=1720612139459" alt="Bard">',
+        portrait: icon('Music', '#f472b6'),
         baseHp: 80,
         baseAtk: 9,
         baseMp: 40,
@@ -905,7 +935,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Cartomancer: {
         description: "A diviner who draws power from a mystical deck of cards, embracing fate's chaotic whims.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/cartomancer_1_m5f-9f9y1.png?updatedAt=1720612140082" alt="Cartomancer">',
+        portrait: icon('GalleryVerticalEnd', '#fbbf24'),
         baseHp: 75,
         baseAtk: 10,
         baseMp: 45,
@@ -938,7 +968,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Echoist: {
         description: "A temporal warrior who manipulates echoes of their own actions to strike multiple times.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/echoist_1_bN2GqM5kh.png?updatedAt=1720612140139" alt="Echoist">',
+        portrait: icon('Repeat', '#22d3ee'),
         baseHp: 80,
         baseAtk: 11,
         baseMp: 35,
@@ -968,7 +998,7 @@ export const CLASS_DATA: { [key in CharacterClass]: {
     },
     Symbiote: {
         description: "A being fused with a living, parasitic entity, using their own life force to fuel powerful, regenerative attacks.",
-        portrait: '<img src="https://ik.imagekit.io/montorneado/symbiote_1_jR5g5f57k.png?updatedAt=1720612140228" alt="Symbiote">',
+        portrait: icon('Biohazard', '#f87171'),
         baseHp: 95,
         baseAtk: 10,
         passiveSkill: {

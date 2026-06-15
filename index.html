@@ -8,15 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="manifest" href="manifest.json">
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "lucide": "https://esm.sh/lucide@0.469.0"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="background-container">
@@ -26,17 +26,9 @@
         </video>
     </div>
     <div id="app">
-        <div id="preloading-screen">
-            <h2>Generating Assets...</h2>
-            <div id="progress-bar-container">
-                <div id="progress-bar"></div>
-            </div>
-            <p id="loading-message">Loading... <span id="loading-percentage">0</span>%</p>
-        </div>
-
-        <div id="intro-storyline" class="hidden">
+        <div id="intro-storyline">
             <p id="story-text"></p>
-            <button id="skip-intro-btn" class="hidden" title="Skip Intro"><i class="fa-solid fa-forward"></i></button>
+            <button id="skip-intro-btn" class="hidden" title="Skip Intro"></button>
         </div>
 
         <div id="main-menu" class="hidden">
@@ -51,6 +43,18 @@
             <footer id="main-menu-footer">
                 <p>Version 0.1.0 Alpha</p>
             </footer>
+        </div>
+
+        <!-- New Asset Generation Modal -->
+        <div id="asset-generation-modal" class="modal-background hidden">
+            <div class="modal-content generation-modal-content">
+                <h2>Weaving Reality</h2>
+                <p>The spirits are shaping the world of Oaktale...</p>
+                <div class="progress-container">
+                    <div id="generation-progress-bar"></div>
+                </div>
+                <p id="generation-status-text">Initializing...</p>
+            </div>
         </div>
 
         <div id="character-selection-screen" class="hidden">
@@ -105,7 +109,7 @@
 
                 <div id="inventory-display" class="hidden">
                     <div class="inventory-summary">
-                        <p><i class="fa-solid fa-coins"></i> Gold: <span id="gold-amount">0</span></p>
+                        <p class="gold-display"> Gold: <span id="gold-amount">0</span></p>
                         <div id="items-list"></div>
                     </div>
                 </div>
@@ -118,19 +122,6 @@
     </div>
 
     <!-- Modals -->
-    <div id="api-key-modal" class="modal-background hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Enter API Key</h2>
-            </div>
-            <p>Please enter your Google Gemini API key to proceed. This is required for generating in-game assets.</p>
-            <input type="password" id="api-key-input" placeholder="Enter your API key">
-            <div class="modal-footer">
-                <button id="save-api-key-btn">Save and Continue</button>
-            </div>
-        </div>
-    </div>
-
     <div id="shop-modal" class="modal-background hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -180,13 +171,12 @@
                 </div>
                 <div class="inventory-details-section">
                     <div class="equipment-slots">
-                        <h3><i class="fa-solid fa-user-shield"></i> Equipment</h3>
-                        <div class="slot" id="equip-slot-weapon"><i class="fa-solid fa-gavel"></i> Weapon: <span>None</span></div>
-                        <div class="slot" id="equip-slot-armor"><i class="fa-solid fa-shield-halved"></i> Armor: <span>None</span></div>
-                        <div class="slot" id="equip-slot-accessory"><i class="fa-solid fa-ring"></i> Accessory: <span>None</span></div>
+                        <h3>Equipment</h3>
+                        <div class="slot" id="equip-slot-weapon"><span class="icon"></span> Weapon: <span class="val">None</span></div>
+                        <div class="slot" id="equip-slot-armor"><span class="icon"></span> Armor: <span class="val">None</span></div>
+                        <div class="slot" id="equip-slot-accessory"><span class="icon"></span> Accessory: <span class="val">None</span></div>
                     </div>
                     <div id="item-details-pane" class="hidden">
-                        <div id="item-details-icon"></div>
                         <h4 id="item-details-name"></h4>
                         <p id="item-details-description"></p>
                         <div id="item-details-stats"></div>
@@ -266,27 +256,27 @@
              </div>
             <div class="settings-options">
                 <div class="settings-option">
-                    <label><i class="fa-solid fa-volume-high"></i> Sound</label>
+                    <label class="icon-label-sound"><i data-lucide="volume-2"></i> Sound</label>
                     <button id="sound-toggle-btn">Sound: ON</button>
                 </div>
                 <div class="settings-option">
-                    <label><i class="fa-solid fa-scroll"></i> Action Log</label>
+                    <label class="icon-label-log"><i data-lucide="file-text"></i> Action Log</label>
                     <button id="clear-log-btn">Clear Log</button>
                 </div>
                 <div class="settings-option">
-                    <label><i class="fa-solid fa-save"></i> Game</label>
+                    <label class="icon-label-save"><i data-lucide="save"></i> Game</label>
                     <button id="modal-save-game-btn">Save Game</button>
                 </div>
                  <div class="settings-option">
-                    <label><i class="fa-solid fa-upload"></i> Data</label>
+                    <label class="icon-label-import"><i data-lucide="download"></i> Data</label>
                     <button id="modal-import-game-btn">Import Game</button>
                 </div>
                  <div class="settings-option">
-                    <label><i class="fa-solid fa-download"></i> Data</label>
+                    <label class="icon-label-export"><i data-lucide="upload"></i> Data</label>
                     <button id="modal-export-game-btn">Export Game</button>
                 </div>
                  <div class="settings-option">
-                    <label><i class="fa-solid fa-door-open"></i> Session</label>
+                    <label class="icon-label-quit"><i data-lucide="log-out"></i> Session</label>
                     <button id="modal-quit-game-btn">Quit Game</button>
                 </div>
             </div>
@@ -312,6 +302,6 @@
 
     <input type="file" id="import-file-input" class="hidden" accept=".json, .oak">
 
-    <script type="module" src="index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>

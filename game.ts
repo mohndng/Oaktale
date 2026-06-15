@@ -1,7 +1,4 @@
 
-
-
-
 import { Character, CharacterClass, Enemy, GameLocation, Skill, Item, Equipment, EquipmentSlot, Blueprint, SkillTome, Quest, GameState, QuestObjective, EnemyRank, Buff, ItemRarity, Pet, PetEgg } from './types';
 import * as dom from './dom';
 import * as ui from './ui';
@@ -22,11 +19,6 @@ const STORYLINE = [
 
 // --- GAME STATE ---
 let gameState: GameState = {
-    gameData: {
-        classData: { ...CLASS_DATA },
-        items: { ...ITEMS },
-        enemies: { ...ENEMIES },
-    },
     characters: [],
     selectedCharacter: null,
     currentLocation: 'main-menu',
@@ -53,7 +45,7 @@ function formatLogMessage(message: string): string {
     let formattedMessage = ` ${message} `; // Add padding for word boundary checks
 
     // Dynamic replacements (most specific)
-    const allItems = Object.values(gameState.gameData.items);
+    const allItems = Object.values(ITEMS);
     allItems.forEach(item => {
         const itemRegex = new RegExp(`\\b(${escapeRegExp(item.name)})\\b`, 'g');
         if (formattedMessage.match(itemRegex)) {
@@ -63,7 +55,7 @@ function formatLogMessage(message: string): string {
     });
 
     const allSkills: Skill[] = [...UNIVERSAL_SKILLS];
-    Object.values(gameState.gameData.classData).forEach(c => allSkills.push(...c.skills));
+    Object.values(CLASS_DATA).forEach(c => allSkills.push(...c.skills));
     allSkills.forEach(skill => {
         const skillRegex = new RegExp(`\\b(${escapeRegExp(skill.name)})\\b`, 'g');
          if (formattedMessage.match(skillRegex)) {
@@ -109,7 +101,7 @@ function getSkillData(skillId: string, characterClass?: CharacterClass): Skill |
     if (universalSkill) return universalSkill;
     const charClass = characterClass || gameState.selectedCharacter?.name;
     if (charClass) {
-        const classSkill = gameState.gameData.classData[charClass].skills.find(s => s.id === skillId);
+        const classSkill = CLASS_DATA[charClass].skills.find(s => s.id === skillId);
         if (classSkill) return classSkill;
     }
     return undefined;
@@ -327,7 +319,7 @@ function loadGame(): boolean {
 }
 
 function createCharacter(className: CharacterClass) {
-    const classData = gameState.gameData.classData[className];
+    const classData = CLASS_DATA[className];
     const level = 1;
     const xpToNextLevel = calculateXpToNextLevel(level);
     
@@ -354,7 +346,6 @@ function createCharacter(className: CharacterClass) {
     const character: Character = {
         name: className,
         portrait: classData.portrait,
-        imageUrl: classData.imageUrl,
         level,
         xp: 0,
         xpToNextLevel,
@@ -392,15 +383,10 @@ function createCharacter(className: CharacterClass) {
 
 function newGame() {
     gameState = {
-        gameData: {
-            classData: { ...CLASS_DATA },
-            items: { ...ITEMS },
-            enemies: { ...ENEMIES },
-        },
         characters: [], selectedCharacter: null, currentLocation: 'main-menu', currentTownName: 'Oakhaven',
         inCombat: false, isExploring: false, currentEnemy: null, playerTurn: true, log: [], isGameOver: false, currentArtisanBlueprints: [], currentQuestGiver: null,
     };
-    (Object.keys(gameState.gameData.classData) as CharacterClass[]).forEach(className => createCharacter(className));
+    (Object.keys(CLASS_DATA) as CharacterClass[]).forEach(className => createCharacter(className));
     dom.mainMenu.classList.add('hidden');
     dom.characterSelectionScreen.classList.remove('hidden');
 
@@ -498,7 +484,7 @@ function explore() {
                     addLogMessage(event.message || `You found ${gold} gold!`);
                     break;
                 case 'find_item':
-                    const item = gameState.gameData.items[event.itemId!];
+                    const item = ITEMS[event.itemId!];
                     if (item) {
                         const quantity = event.quantity || 1;
                         gameState.selectedCharacter!.inventory[item.id] = (gameState.selectedCharacter!.inventory[item.id] || 0) + quantity;
@@ -514,7 +500,7 @@ function explore() {
                         treasureMessage += ' and ';
                         const itemMessages: string[] = [];
                         event.items.forEach(itemDrop => {
-                            const foundItem = gameState.gameData.items[itemDrop.itemId];
+                            const foundItem = ITEMS[itemDrop.itemId];
                             if (foundItem) {
                                 gameState.selectedCharacter!.inventory[foundItem.id] = (gameState.selectedCharacter!.inventory[foundItem.id] || 0) + itemDrop.quantity;
                                 itemMessages.push(`${itemDrop.quantity > 1 ? itemDrop.quantity + ' ' : ''}${foundItem.name}`);
@@ -530,7 +516,7 @@ function explore() {
                 case 'npc':
                     if (event.message) addLogMessage(event.message);
                     if (event.itemId) {
-                        const npcItem = gameState.gameData.items[event.itemId];
+                        const npcItem = ITEMS[event.itemId];
                         const quantity = event.quantity || 1;
                         if (npcItem) {
                             gameState.selectedCharacter!.inventory[npcItem.id] = (gameState.selectedCharacter!.inventory[npcItem.id] || 0) + quantity;
@@ -561,7 +547,7 @@ function explore() {
 
 
 function startCombat(enemyId: string, isAmbush: boolean = false) {
-    const enemyData = { ...gameState.gameData.enemies[enemyId] };
+    const enemyData = { ...ENEMIES[enemyId] };
     if (!enemyData || !enemyData.rank) return;
 
     let rank: EnemyRank = enemyData.rank;
@@ -639,7 +625,7 @@ export function endCombat(win: boolean, message?: string) {
         enemy.drops.items.forEach(drop => {
             if (Math.random() < drop.chance) {
                 player.inventory[drop.itemId] = (player.inventory[drop.itemId] || 0) + 1;
-                addLogMessage(`The enemy dropped a ${gameState.gameData.items[drop.itemId].name}!`);
+                addLogMessage(`The enemy dropped a ${ITEMS[drop.itemId].name}!`);
             }
         });
         
@@ -655,7 +641,7 @@ export function endCombat(win: boolean, message?: string) {
             player.gold -= goldPenalty;
             if (player.gold < 0) player.gold = 0;
 
-            showInfoModal(
+            ui.showInfoModal(
                 "Defeated...",
                 `You collapse from your wounds. A passing stranger finds you and carries you to the nearest town to recover. You lost ${goldPenalty} gold in the commotion.`,
                 () => {
@@ -939,10 +925,10 @@ function levelUp() {
     const player = gameState.selectedCharacter!;
     player.level++;
     player.xpToNextLevel = calculateXpToNextLevel(player.level);
-    player.baseHp += Math.round(gameState.gameData.classData[player.name].baseHp * 0.1);
-    player.baseAtk += Math.round(gameState.gameData.classData[player.name].baseAtk * 0.1);
+    player.baseHp += Math.round(CLASS_DATA[player.name].baseHp * 0.1);
+    player.baseAtk += Math.round(CLASS_DATA[player.name].baseAtk * 0.1);
     if (player.baseMp) {
-        player.baseMp += Math.round((gameState.gameData.classData[player.name].baseMp || 0) * 0.1);
+        player.baseMp += Math.round((CLASS_DATA[player.name].baseMp || 0) * 0.1);
     }
     updateCharacterStats(player);
     player.hp = player.maxHp;
@@ -953,7 +939,7 @@ function levelUp() {
     addLogMessage(`${player.name} has reached Level ${player.level}!`);
 
     // Automatically learn new skills
-    const classSkills = gameState.gameData.classData[player.name].skills;
+    const classSkills = CLASS_DATA[player.name].skills;
     const universalSkills = UNIVERSAL_SKILLS;
 
     const allLearnableSkills = [...classSkills, ...universalSkills];
@@ -1064,7 +1050,7 @@ function turnInQuest(questId: string) {
         if (quest.rewards.items) {
             quest.rewards.items.forEach(itemReward => {
                 player.inventory[itemReward.itemId] = (player.inventory[itemReward.itemId] || 0) + itemReward.quantity;
-                addLogMessage(`Quest Reward: ${gameState.gameData.items[itemReward.itemId].name} x${itemReward.quantity}.`);
+                addLogMessage(`Quest Reward: ${ITEMS[itemReward.itemId].name} x${itemReward.quantity}.`);
             });
         }
         
@@ -1160,296 +1146,31 @@ function openInventoryModal() {
 function handleSaveGame() {
     saveGame();
     soundManager.play(SOUNDS.SELECT);
-    showInfoModal('Game Saved', 'Your progress has been successfully saved.');
-}
-
-function handleQuitGame() {
-    showConfirmModal(
-        "Are you sure you want to quit? Unsaved progress may be lost.",
-        () => {
-            dom.settingsModal.classList.add('hidden');
-            location.reload();
-        }
-    );
-}
-function handleImportGame() {
-    dom.importFileInput.click();
-    dom.importFileInput.onchange = (event) => {
-        const file = (event.target as HTMLInputElement).files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const savedState = e.target?.result as string;
-                    // Support both raw JSON and base64 encoded
-                    let loadedState;
-                    try {
-                        loadedState = JSON.parse(savedState);
-                    } catch (jsonError) {
-                        loadedState = JSON.parse(atob(savedState));
-                    }
-
-                    gameState = {
-                        ...gameState,
-                        ...loadedState,
-                    };
-                    dom.settingsModal.classList.add('hidden');
-                    showInfoModal('Game Imported', 'Game state loaded successfully.', () => {
-                         ui.renderAll(gameState, handlers);
-                    });
-                } catch (err) {
-                    showInfoModal('Import Failed', 'The save file is invalid or corrupted.');
-                }
-            };
-            reader.readAsText(file);
-        }
-    };
-}
-
-function handleExportGame() {
-    const dataStr = btoa(JSON.stringify(gameState));
-    const exportFileDefaultName = `oaktale_save_${Date.now()}.oak`;
-
-    const blob = new Blob([dataStr], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', url);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    document.body.appendChild(linkElement);
-    linkElement.click();
-    document.body.removeChild(linkElement);
-    URL.revokeObjectURL(url);
-}
-
-function openQuestLogModal() {
-    if (gameState.selectedCharacter) {
-        ui.openQuestLogModal(gameState.selectedCharacter);
-    }
-}
-function openSettingsModal() {
-    ui.openSettingsModal(clearLog, handleSaveGame, handleQuitGame, handleImportGame, handleExportGame);
-}
-
-function openCombatItemModal() {
-    const player = gameState.selectedCharacter!;
-    const consumables = Object.keys(player.inventory).filter(id => gameState.gameData.items[id]?.type === 'Consumable' && player.inventory[id] > 0);
-    if (consumables.length === 0) {
-        addLogMessage("You have no items to use.");
-        return;
-    }
-    ui.openCombatItemModal(player, playerUseItem);
+    ui.showInfoModal('Game Saved', 'Your progress has been saved.', () => {});
 }
 
 function generateArtisanInventory() {
-    gameState.currentArtisanBlueprints = [...BLUEPRINTS].sort(() => 0.5 - Math.random()).slice(0, 3);
-}
-
-function clearLog() {
-    gameState.log = ['Log cleared.'];
-    if (dom.actionLog) ui.renderActionLog(gameState.log);
-}
-
-function showInfoModal(title: string, text: string, onClose?: () => void) {
-    dom.getElement('info-modal-title').textContent = title;
-    dom.getElement('info-modal-text').textContent = text;
-    dom.infoModal.classList.remove('hidden');
-    dom.getElement('info-modal-close-btn').onclick = () => {
-        dom.infoModal.classList.add('hidden');
-        if (onClose) {
-            onClose();
-        }
-    };
-}
-
-function equipItem(itemId: string) {
-    const player = gameState.selectedCharacter!;
-    const itemToEquip = gameState.gameData.items[itemId] as Equipment;
-    if (itemToEquip.type !== 'Equipment' || player.inventory[itemId] < 1) return;
-    
-    if (itemToEquip.allowedClasses && !itemToEquip.allowedClasses.includes(player.name)) {
-        addLogMessage(`You cannot equip this. It is for: ${itemToEquip.allowedClasses.join(', ')}.`);
-        return;
-    }
-
-    soundManager.play(SOUNDS.SELECT);
-    const slot = itemToEquip.slot;
-    const currentlyEquipped = player.equipment[slot];
-    
-    if (currentlyEquipped) {
-        player.inventory[currentlyEquipped.id] = (player.inventory[currentlyEquipped.id] || 0) + 1;
-    }
-    
-    player.inventory[itemId]--;
-    player.equipment[slot] = itemToEquip;
-    
-    addLogMessage(`You equipped ${itemToEquip.name}.`);
-    updateCharacterStats(player);
-    
-    // Refresh UI
-    ui.renderItemDetails(player, itemId, equipItem, useItemFromInventory);
-    if (player.inventory[itemId] === 0) {
-        dom.getElement('item-details-pane').classList.add('hidden');
-    }
-    ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
-    ui.renderEquippedItems(player, unequipItem);
-    ui.renderCharacterPanel(player, openInventoryModal, openSettingsModal, openQuestLogModal);
-    saveGame();
-}
-
-function unequipItem(slot: EquipmentSlot) {
-    const player = gameState.selectedCharacter!;
-    const itemToUnequip = player.equipment[slot];
-    if (!itemToUnequip) return;
-    
-    soundManager.play(SOUNDS.CLICK);
-    player.equipment[slot] = null;
-    player.inventory[itemToUnequip.id] = (player.inventory[itemToUnequip.id] || 0) + 1;
-    
-    addLogMessage(`You unequipped ${itemToUnequip.name}.`);
-    updateCharacterStats(player);
-    
-    // Refresh UI
-    dom.getElement('item-details-pane').classList.add('hidden');
-    ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
-    ui.renderEquippedItems(player, unequipItem);
-    ui.renderCharacterPanel(player, openInventoryModal, openSettingsModal, openQuestLogModal);
-    saveGame();
-}
-
-function useItemFromInventory(itemId: string) {
-    const player = gameState.selectedCharacter!;
-    const item = gameState.gameData.items[itemId];
-    if (!item || player.inventory[itemId] < 1) return;
-
-    let itemUsed = false;
-
-    if (item.type === 'SkillTome') {
-        const skillTome = item as SkillTome;
-        if (player.skills.includes(skillTome.skillId)) {
-            addLogMessage(`You already know the ${getSkillData(skillTome.skillId)?.name} skill.`);
-            return;
-        }
-        player.skills.push(skillTome.skillId);
-        addLogMessage(`You read the tome and learn ${getSkillData(skillTome.skillId)?.name}!`);
-        itemUsed = true;
-    } else if (item.type === 'PetEgg') {
-        if (player.pet) {
-            addLogMessage("You already have a loyal companion by your side. You can only manage one pet for now.");
-            return;
-        }
-
-        const egg = item as PetEgg;
-        const rand = Math.random();
-        let chosenRarity: ItemRarity = 'Common';
-
-        if (rand < 0.03 && egg.hatchablePets.Epic?.length) chosenRarity = 'Epic';
-        else if (rand < 0.15 && egg.hatchablePets.Rare?.length) chosenRarity = 'Rare';
-        else if (rand < 0.40 && egg.hatchablePets.Uncommon?.length) chosenRarity = 'Uncommon';
-        
-        let petPool = egg.hatchablePets[chosenRarity];
-        if (!petPool || petPool.length === 0) {
-            const rarities: ItemRarity[] = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
-            for (const rarity of rarities) {
-                const pool = egg.hatchablePets[rarity];
-                if (pool && pool.length > 0) {
-                    petPool = pool;
-                    chosenRarity = rarity; // Update chosen rarity if we had to fall back
-                    break;
-                }
-            }
-        }
-        if (!petPool) {
-            addLogMessage("The egg feels inert and doesn't hatch.");
-            return;
-        }
-        const petId = petPool[Math.floor(Math.random() * petPool.length)];
-        const petData = PET_DATA[petId];
-        
-        if (petData) {
-            player.pet = {
-                ...petData,
-                rarity: chosenRarity, // Assign the actual hatched rarity
-                level: 1,
-                xp: 0,
-                xpToNextLevel: calculatePetXpToNextLevel(1),
-                atk: petData.baseAtk,
-            };
-            itemUsed = true;
-            addLogMessage(`The egg hatches into a ${chosenRarity} ${petData.name}! It joins you as a companion.`);
-            soundManager.play(SOUNDS.LEVEL_UP);
-        } else {
-            addLogMessage("The egg shivers and does nothing.");
-        }
-    }
-
-    if (itemUsed) {
-        player.inventory[itemId]--;
-        if (player.inventory[itemId] === 0) {
-            dom.getElement('item-details-pane').classList.add('hidden');
-        }
-        ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
-        ui.renderCharacterPanel(player, openInventoryModal, openSettingsModal, openQuestLogModal);
-        saveGame();
-    } else {
-        addLogMessage("You can't use that right now.");
-    }
-}
-
-function playerUseItem(itemId: string) {
-    const player = gameState.selectedCharacter!;
-    const item = gameState.gameData.items[itemId];
-    if (!item || player.inventory[itemId] < 1) return;
-    if (item.type !== 'Consumable') return;
-
-    player.inventory[itemId]--;
-
-    let log = `${player.name} uses ${item.name}.`;
-    let itemUsed = false;
-    
-    switch (item.id) {
-        case 'healthPotion':
-            const healAmount = 50;
-            player.hp = Math.min(player.maxHp, player.hp + healAmount);
-            log += ` It restores ${healAmount} HP.`;
-            ui.showDamagePopup('player-combatant-card', `+${healAmount}`, 'heal');
-            soundManager.play(SOUNDS.HEAL);
-            itemUsed = true;
-            break;
-        case 'manaPotion':
-            if (player.mp !== undefined && player.maxMp !== undefined) {
-                const manaAmount = 30;
-                player.mp = Math.min(player.maxMp, player.mp + manaAmount);
-                log += ` It restores ${manaAmount} MP.`;
-                itemUsed = true;
-            } else {
-                log += ` But it has no effect!`;
-            }
-            break;
-        case 'strengthPotion':
-            player.buffs.push({ id: 'attack_up', name: 'Strengthened', duration: 3, value: 0.3 });
-            log += ` Their attack is increased.`;
-            itemUsed = true;
-            break;
-    }
-
-    if (itemUsed) {
-        processTurn(log);
-    } else {
-        player.inventory[itemId]++;
-        addLogMessage("This item can't be used in combat.");
-        dom.combatControlsContainer.querySelectorAll('button').forEach(b => (b as HTMLButtonElement).disabled = false);
+    // Randomly select some blueprints
+    const numBlueprints = 3;
+    const available = [...BLUEPRINTS];
+    gameState.currentArtisanBlueprints = [];
+    for (let i = 0; i < numBlueprints; i++) {
+        if (available.length === 0) break;
+        const idx = Math.floor(Math.random() * available.length);
+        gameState.currentArtisanBlueprints.push(available[idx]);
+        available.splice(idx, 1);
     }
 }
 
 function handleOpenShop() {
-    currentShopInventory = [];
-    const availableItems = Object.values(gameState.gameData.items).filter(i => i.type === 'Consumable' || i.type === 'Equipment');
-    for (let i = 0; i < 5; i++) {
-        const item = availableItems[Math.floor(Math.random() * availableItems.length)];
-        const cost = Math.floor(item.baseCost * RARITY_DATA[item.rarity].multiplier * (0.8 + Math.random() * 0.4)); 
-        if (!currentShopInventory.some(si => si.item.id === item.id)) {
-            currentShopInventory.push({ item, cost });
+    // Generate shop inventory if empty or new town? 
+    // Usually generated once per town visit.
+    if (currentShopInventory.length === 0) {
+        // Generate random items
+        const shopItems = Object.values(ITEMS).filter(i => i.rarity === 'Common' || i.rarity === 'Uncommon');
+        for (let i = 0; i < 5; i++) {
+             const item = shopItems[Math.floor(Math.random() * shopItems.length)];
+             currentShopInventory.push({ item, cost: item.baseCost });
         }
     }
     ui.openShopModal(gameState.selectedCharacter!, currentShopInventory, buyItem, sellItem);
@@ -1460,24 +1181,28 @@ function buyItem(itemId: string, cost: number) {
     if (player.gold >= cost) {
         player.gold -= cost;
         player.inventory[itemId] = (player.inventory[itemId] || 0) + 1;
-        addLogMessage(`You bought ${gameState.gameData.items[itemId].name}.`);
-        soundManager.play(SOUNDS.CLICK);
-        ui.openShopModal(player, currentShopInventory, buyItem, sellItem);
+        addLogMessage(`Bought ${ITEMS[itemId].name} for ${cost} gold.`);
+        soundManager.play(SOUNDS.CLICK); // or coins sound
+        ui.openShopModal(player, currentShopInventory, buyItem, sellItem); // Re-render
         ui.renderAll(gameState, handlers);
+        saveGame();
+    } else {
+        addLogMessage("Not enough gold!");
     }
 }
 
 function sellItem(itemId: string) {
     const player = gameState.selectedCharacter!;
     if (player.inventory[itemId] > 0) {
-        const item = gameState.gameData.items[itemId];
+        const item = ITEMS[itemId];
         const sellPrice = Math.max(1, Math.floor(item.baseCost * 0.3));
         player.inventory[itemId]--;
         player.gold += sellPrice;
-        addLogMessage(`You sold ${item.name} for ${sellPrice} gold.`);
+        addLogMessage(`Sold ${item.name} for ${sellPrice} gold.`);
         soundManager.play(SOUNDS.CLICK);
-        ui.openShopModal(player, currentShopInventory, buyItem, sellItem);
+        ui.openShopModal(player, currentShopInventory, buyItem, sellItem); // Re-render
         ui.renderAll(gameState, handlers);
+        saveGame();
     }
 }
 
@@ -1486,34 +1211,244 @@ function handleOpenArtisan() {
 }
 
 function craftItem(blueprintId: string) {
+    const bp = BLUEPRINTS.find(b => b.id === blueprintId);
+    if (!bp) return;
     const player = gameState.selectedCharacter!;
-    const blueprint = gameState.currentArtisanBlueprints.find(b => b.id === blueprintId);
-    if (!blueprint) return;
-
-    if (player.gold < blueprint.requirements.gold) {
-        addLogMessage("Not enough gold.");
-        return;
-    }
-    const hasMaterials = Object.entries(blueprint.requirements.materials).every(([matId, reqCount]) => {
-        return (player.inventory[matId] || 0) >= reqCount;
-    });
-    if (!hasMaterials) {
-        addLogMessage("You don't have the required materials.");
-        return;
-    }
-
-    player.gold -= blueprint.requirements.gold;
-    Object.entries(blueprint.requirements.materials).forEach(([matId, reqCount]) => {
-        player.inventory[matId] -= reqCount;
-    });
-
-    player.inventory[blueprint.resultItemId] = (player.inventory[blueprint.resultItemId] || 0) + 1;
     
-    addLogMessage(`You crafted ${gameState.gameData.items[blueprint.resultItemId].name}!`);
-    soundManager.play(SOUNDS.LEVEL_UP);
+    // Check requirements
+    if (player.gold < bp.requirements.gold) {
+        addLogMessage("Not enough gold to craft this.");
+        return;
+    }
+    for (const [matId, count] of Object.entries(bp.requirements.materials)) {
+        if ((player.inventory[matId] || 0) < count) {
+            addLogMessage("Missing materials.");
+            return;
+        }
+    }
 
+    // Consume resources
+    player.gold -= bp.requirements.gold;
+    for (const [matId, count] of Object.entries(bp.requirements.materials)) {
+        player.inventory[matId] -= count;
+    }
+
+    // Grant item
+    player.inventory[bp.resultItemId] = (player.inventory[bp.resultItemId] || 0) + 1;
+    addLogMessage(`Crafted ${ITEMS[bp.resultItemId].name}!`);
+    soundManager.play(SOUNDS.WIN); // Craft sound
+    
     ui.openArtisanModal(player, gameState.currentArtisanBlueprints, craftItem);
     ui.renderAll(gameState, handlers);
+    saveGame();
+}
+
+function useItemInCombat(itemId: string) {
+    const player = gameState.selectedCharacter!;
+    const item = ITEMS[itemId];
+    
+    if (item.type === 'Consumable') {
+        player.inventory[itemId]--;
+        if (itemId === 'healthPotion') {
+            const heal = 50;
+            player.hp = Math.min(player.maxHp, player.hp + heal);
+            ui.showDamagePopup('player-combatant-card', `+${heal}`, 'heal');
+            processTurn(`Used Health Potion. Recovered ${heal} HP.`);
+        } else if (itemId === 'manaPotion') {
+            const mana = 30;
+            if (player.mp !== undefined) player.mp = Math.min(player.maxMp!, player.mp + mana);
+             ui.showDamagePopup('player-combatant-card', `+${mana} MP`, 'heal');
+            processTurn(`Used Mana Potion. Recovered ${mana} MP.`);
+        } else if (itemId === 'strengthPotion') {
+             player.buffs.push({ id: 'attack_up', name: 'Strength Potion', duration: 3, value: 0.3 });
+             processTurn(`Used Strength Potion. ATK increased.`);
+        }
+        soundManager.play(SOUNDS.HEAL);
+    }
+}
+
+function useItemFromInventory(itemId: string) {
+    const player = gameState.selectedCharacter!;
+    const item = ITEMS[itemId];
+    
+    if (item.type === 'Consumable') {
+        if (itemId === 'healthPotion') {
+             if (player.hp === player.maxHp) {
+                 addLogMessage("You are already at full health.");
+                 return;
+             }
+             player.inventory[itemId]--;
+             player.hp = Math.min(player.maxHp, player.hp + 50);
+             addLogMessage("Used Health Potion.");
+             soundManager.play(SOUNDS.HEAL);
+        } else if (itemId === 'manaPotion') {
+             if (player.mp === player.maxMp) {
+                 addLogMessage("You are already at full mana.");
+                 return;
+             }
+             player.inventory[itemId]--;
+             if (player.mp !== undefined) player.mp = Math.min(player.maxMp!, player.mp + 30);
+             addLogMessage("Used Mana Potion.");
+              soundManager.play(SOUNDS.HEAL);
+        } else if (itemId === 'strengthPotion') {
+            addLogMessage("You can only use this in combat.");
+            return;
+        }
+    } else if (item.type === 'SkillTome') {
+        const tome = item as SkillTome;
+        if (player.skills.includes(tome.skillId)) {
+             addLogMessage("You already know this skill.");
+             return;
+        }
+        player.inventory[itemId]--;
+        player.skills.push(tome.skillId);
+        addLogMessage(`You learned ${getSkillData(tome.skillId)?.name}!`);
+        soundManager.play(SOUNDS.LEVEL_UP);
+    } else if (item.type === 'PetEgg') {
+         // Hatch logic
+         const egg = item as PetEgg;
+         player.inventory[itemId]--;
+         const possiblePets = egg.hatchablePets.Common || []; // Simple logic for now, should base on chances
+         // Using simplified logic: pick random from all rarities
+         let pool: string[] = [];
+         if (egg.hatchablePets.Common) pool.push(...egg.hatchablePets.Common);
+         if (egg.hatchablePets.Uncommon) pool.push(...egg.hatchablePets.Uncommon);
+         if (egg.hatchablePets.Rare) pool.push(...egg.hatchablePets.Rare);
+         if (egg.hatchablePets.Epic) pool.push(...egg.hatchablePets.Epic);
+         
+         if (pool.length > 0) {
+             const petId = pool[Math.floor(Math.random() * pool.length)];
+             const petData = PET_DATA[petId];
+             player.pet = {
+                 ...petData,
+                 level: 1,
+                 xp: 0,
+                 xpToNextLevel: calculatePetXpToNextLevel(1),
+                 atk: petData.baseAtk
+             };
+             addLogMessage(`The egg hatches! A ${player.pet.name} is now your companion.`);
+             soundManager.play(SOUNDS.WIN);
+         }
+    }
+    
+    ui.renderAll(gameState, handlers);
+    saveGame();
+    // Re-open inventory to update
+    ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
+    ui.renderItemDetails(player, itemId, equipItem, useItemFromInventory);
+}
+
+function equipItem(itemId: string) {
+    const player = gameState.selectedCharacter!;
+    const item = ITEMS[itemId] as Equipment;
+    
+    if (item.allowedClasses && !item.allowedClasses.includes(player.name)) {
+        addLogMessage(`Only ${item.allowedClasses.join(', ')} can equip this.`);
+        return;
+    }
+
+    // Unequip current if exists
+    if (player.equipment[item.slot]) {
+        const currentId = player.equipment[item.slot]!.id;
+        player.inventory[currentId] = (player.inventory[currentId] || 0) + 1;
+    }
+    
+    player.inventory[itemId]--;
+    player.equipment[item.slot] = item;
+    
+    updateCharacterStats(player);
+    soundManager.play(SOUNDS.CLICK); // Equip sound
+    
+    ui.renderAll(gameState, handlers);
+    saveGame();
+    ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
+    ui.renderEquippedItems(player, unequipItem);
+}
+
+function unequipItem(slot: EquipmentSlot) {
+    const player = gameState.selectedCharacter!;
+    const item = player.equipment[slot];
+    if (item) {
+        player.equipment[slot] = null;
+        player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
+        updateCharacterStats(player);
+        soundManager.play(SOUNDS.CLICK);
+        ui.renderAll(gameState, handlers);
+        saveGame();
+        ui.renderInventoryList(player, (id) => ui.renderItemDetails(player, id, equipItem, useItemFromInventory));
+        ui.renderEquippedItems(player, unequipItem);
+    }
+}
+
+function openSettingsModal() {
+    ui.openSettingsModal(
+        () => { // Clear log
+            gameState.log = [];
+            ui.renderActionLog(gameState.log);
+        },
+        () => { // Save
+            saveGame();
+            ui.showInfoModal('Game Saved', 'Game saved manually.', () => {});
+        },
+        () => { // Quit
+             gameState.selectedCharacter = null;
+             dom.gameContainer.classList.add('hidden');
+             dom.mainMenu.classList.remove('hidden');
+             dom.characterSelectionScreen.classList.add('hidden');
+             // Reset state mostly
+             gameState.inCombat = false;
+        },
+        () => { // Import
+            dom.importFileInput.click();
+            dom.importFileInput.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                const text = await file.text();
+                try {
+                    const loadedState = JSON.parse(text);
+                    if (loadedState.characters) {
+                        gameState = loadedState;
+                        ui.showInfoModal('Game Loaded', 'Game state imported successfully.', () => {
+                            if (gameState.selectedCharacter) {
+                                dom.mainMenu.classList.add('hidden');
+                                dom.gameContainer.classList.remove('hidden');
+                                ui.renderAll(gameState, handlers);
+                            }
+                        });
+                        saveGame();
+                    }
+                } catch (err) {
+                    ui.showInfoModal('Import Failed', 'Invalid save file.', () => {});
+                }
+            };
+        },
+        () => { // Export
+             const dataStr = btoa(JSON.stringify(gameState));
+             const exportFileDefaultName = `oaktale_save_${Date.now()}.oak`;
+             const blob = new Blob([dataStr], { type: "text/plain;charset=utf-8" });
+             const url = URL.createObjectURL(blob);
+             const linkElement = document.createElement('a');
+             linkElement.setAttribute('href', url);
+             linkElement.setAttribute('download', exportFileDefaultName);
+             document.body.appendChild(linkElement);
+             linkElement.click();
+             document.body.removeChild(linkElement);
+             URL.revokeObjectURL(url);
+        }
+    );
+}
+
+function openQuestLogModal() {
+    if (gameState.selectedCharacter) {
+        ui.openQuestLogModal(gameState.selectedCharacter);
+    }
+}
+
+function openCombatItemModal() {
+    const player = gameState.selectedCharacter!;
+    if (gameState.inCombat && gameState.playerTurn) {
+        ui.openCombatItemModal(player, useItemInCombat);
+    }
 }
 
 const handlers = {
@@ -1528,86 +1463,63 @@ const handlers = {
 
 // --- INITIALIZATION ---
 export function initializeGame() {
-    const startGameWithIntro = () => {
-        if (loadGame() && gameState.selectedCharacter) {
-            dom.newGameBtn.classList.remove('hidden');
-            dom.continueBtn.classList.remove('hidden');
-            dom.continueBtn.onclick = () => {
-                soundManager.play(SOUNDS.SELECT);
-                dom.mainMenu.classList.add('hidden');
-                dom.gameContainer.classList.remove('hidden');
-                addLogMessage("Welcome back! Your adventure continues.");
-                ui.renderAll(gameState, handlers);
-            };
-            dom.newGameBtn.onclick = () => {
-                 showConfirmModal("Are you sure you want to start a new game? Your previous save will be overwritten.", newGame);
-            };
-        } else {
-            dom.newGameBtn.classList.remove('hidden');
-            dom.newGameBtn.textContent = 'New Game';
-            dom.continueBtn.classList.add('hidden');
-            dom.newGameBtn.onclick = newGame;
-        }
-
-        let storyIndex = 0;
-        let storyTimeoutId: ReturnType<typeof setTimeout>;
-
-        const endIntroSequence = () => {
-            clearTimeout(storyTimeoutId);
-            dom.introStoryline.style.opacity = '0';
-            dom.mainMenu.classList.remove('hidden');
-            dom.mainMenu.classList.add('fade-in-container');
-            setTimeout(() => dom.introStoryline.classList.add('hidden'), 1500);
+    if (loadGame() && gameState.selectedCharacter) {
+        dom.newGameBtn.classList.remove('hidden');
+        dom.continueBtn.classList.remove('hidden');
+        dom.continueBtn.onclick = () => {
+            soundManager.play(SOUNDS.SELECT);
+            dom.mainMenu.classList.add('hidden');
+            dom.gameContainer.classList.remove('hidden');
+            addLogMessage("Welcome back! Your adventure continues.");
+            ui.renderAll(gameState, handlers);
         };
-
-        const showNextStoryLine = () => {
-            if (storyIndex >= STORYLINE.length) {
-                endIntroSequence();
-                return;
-            }
-
-            dom.storyText.textContent = STORYLINE[storyIndex];
-            dom.storyText.className = 'fade-in';
-            storyIndex++;
-
-            storyTimeoutId = setTimeout(() => {
-                dom.storyText.className = 'fade-out';
-                storyTimeoutId = setTimeout(showNextStoryLine, 1500); // Wait for fade-out
-            }, 3000); // Display for 3s
-        };
-
-        const skipIntro = () => {
-            endIntroSequence();
-        };
-        dom.skipIntroBtn.onclick = skipIntro;
-
-        if (!localStorage.getItem('oaktaleGameState')) {
-            // Preloading screen is already visible, this will be hidden by preloadAssets
-            // The intro will be made visible by preloadAssets
-            dom.skipIntroBtn.classList.remove('hidden');
-            showNextStoryLine();
-        } else {
-            dom.introStoryline.classList.add('hidden');
-            dom.mainMenu.classList.remove('hidden');
-        }
-    };
-
-    // Check for API Key before starting the game
-    const apiKey = localStorage.getItem('geminiApiKey');
-    if (!apiKey) {
-        dom.apiKeyModal.classList.remove('hidden');
-        dom.preloadingScreen.classList.add('hidden');
-
-        dom.saveApiKeyBtn.onclick = () => {
-            const inputKey = dom.apiKeyInput.value.trim();
-            if (inputKey) {
-                localStorage.setItem('geminiApiKey', inputKey);
-                dom.apiKeyModal.classList.add('hidden');
-                dom.preloadingScreen.classList.remove('hidden');
-                ui.preloadAssets(gameState.gameData, startGameWithIntro);
-            }
+        dom.newGameBtn.onclick = () => {
+             showConfirmModal("Are you sure you want to start a new game? Your previous save will be overwritten.", newGame);
         };
     } else {
-        ui.preloadAssets(gameState.gameData, startGameWithIntro);
+        dom.newGameBtn.classList.remove('hidden');
+        dom.newGameBtn.textContent = 'New Game';
+        dom.continueBtn.classList.add('hidden');
+        dom.newGameBtn.onclick = newGame;
+    }
+    
+    let storyIndex = 0;
+    let storyTimeoutId: ReturnType<typeof setTimeout>;
+
+    const endIntroSequence = () => {
+        clearTimeout(storyTimeoutId);
+        dom.introStoryline.style.opacity = '0';
+        dom.mainMenu.classList.remove('hidden');
+        dom.mainMenu.classList.add('fade-in-container');
+        setTimeout(() => dom.introStoryline.classList.add('hidden'), 1500);
+    };
+
+    const showNextStoryLine = () => {
+        if (storyIndex >= STORYLINE.length) {
+            endIntroSequence();
+            return;
+        }
+        
+        dom.storyText.textContent = STORYLINE[storyIndex];
+        dom.storyText.className = 'fade-in';
+        storyIndex++;
+        
+        storyTimeoutId = setTimeout(() => {
+            dom.storyText.className = 'fade-out';
+            storyTimeoutId = setTimeout(showNextStoryLine, 1500); // Wait for fade-out
+        }, 3000); // Display for 3s
+    };
+
+    const skipIntro = () => {
+        endIntroSequence();
+    };
+    dom.skipIntroBtn.onclick = skipIntro;
+
+    if (!localStorage.getItem('oaktaleGameState')) {
+        dom.skipIntroBtn.classList.remove('hidden');
+        showNextStoryLine();
+    } else {
+        dom.introStoryline.classList.add('hidden');
+        dom.mainMenu.classList.remove('hidden');
     }
 }

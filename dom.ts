@@ -1,3 +1,4 @@
+
 export function getElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
     if (!el) throw new Error(`Element with id '${id}' not found.`);
@@ -47,6 +48,10 @@ export const explorationOverlay = getElement('exploration-overlay');
 export const townBackground = getElement<HTMLImageElement>('town-background');
 export const crossroadsBackground = getElement<HTMLImageElement>('crossroads-background');
 
+export const assetGenerationModal = getElement('asset-generation-modal');
+export const generationProgressBar = getElement('generation-progress-bar');
+export const generationStatusText = getElement('generation-status-text');
+
 export const settingsModal = getElement('settings-modal');
 export const soundToggleBtn = getElement<HTMLButtonElement>('sound-toggle-btn');
 export const clearLogBtn = getElement<HTMLButtonElement>('clear-log-btn');
@@ -57,9 +62,3 @@ export const modalImportGameBtn = getElement<HTMLButtonElement>('modal-import-ga
 export const modalExportGameBtn = getElement<HTMLButtonElement>('modal-export-game-btn');
 export const importFileInput = getElement<HTMLInputElement>('import-file-input');
 export const backgroundMusic = getElement<HTMLAudioElement>('background-music');
-export const preloadingScreen = getElement('preloading-screen');
-
-// API Key Modal
-export const apiKeyModal = getElement('api-key-modal');
-export const apiKeyInput = getElement<HTMLInputElement>('api-key-input');
-export const saveApiKeyBtn = getElement<HTMLButtonElement>('save-api-key-btn');

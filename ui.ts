@@ -1,9 +1,9 @@
+
 import { Character, CharacterClass, Enemy, Buff, Item, Equipment, EquipmentSlot, ItemType, Skill, Blueprint, SkillTome, GameState, Quest, Title, ItemRarity, Pet } from './types';
 import * as dom from './dom';
-import { CLASS_DATA, ITEMS, LOCATIONS, RARITY_DATA, UNIVERSAL_SKILLS, TITLES, ENEMIES } from './data';
+import { CLASS_DATA, ITEMS, LOCATIONS, RARITY_DATA, UNIVERSAL_SKILLS, TITLES, icon } from './data';
 import { GameLocation } from './types';
 import { soundManager } from './sound';
-import { generateImage } from './ai';
 
 
 // --- UI HELPERS ---
@@ -24,21 +24,21 @@ function getSkillData(skillId: string, characterClass?: CharacterClass): Skill |
 
 function getLocationIcon(locationId: GameLocation): string {
     const icons: { [key: string]: string } = {
-        crossroads: `<i class="fa-solid fa-signs-post"></i>`,
-        town: `<i class="fa-solid fa-house-chimney"></i>`,
-        woods: `<i class="fa-solid fa-tree"></i>`,
-        cave: `<i class="fa-solid fa-dungeon"></i>`,
-        ruins: `<i class="fa-solid fa-gopuram"></i>`,
-        clockworkMenagerie: `<i class="fa-solid fa-gears"></i>`,
-        dreamersLabyrinth: `<i class="fa-solid fa-circle-nodes"></i>`,
-        saltFlats: `<i class="fa-solid fa-gem"></i>`,
-        vaultOfFrozenMoments: `<i class="fa-solid fa-snowflake"></i>`,
-        mycelialNetwork: `<i class="fa-solid fa-bacterium"></i>`,
-        aetheriumDocks: `<i class="fa-solid fa-anchor"></i>`,
-        gardenOfReciprocalHunger: `<i class="fa-solid fa-plant-wilt"></i>`,
-        sunkenCityOfTwoTides: `<i class="fa-solid fa-water"></i>`,
-        architectsFolly: `<i class="fa-solid fa-drafting-compass"></i>`,
-        generic: `<i class="fa-solid fa-location-dot"></i>`,
+        crossroads: icon('Map', '#cbd5e1', 1.5),
+        town: icon('House', '#cbd5e1', 1.5),
+        woods: icon('Trees', '#cbd5e1', 1.5),
+        cave: icon('Mountain', '#cbd5e1', 1.5),
+        ruins: icon('Castle', '#cbd5e1', 1.5),
+        clockworkMenagerie: icon('Cog', '#cbd5e1', 1.5),
+        dreamersLabyrinth: icon('Brain', '#cbd5e1', 1.5),
+        saltFlats: icon('Gem', '#cbd5e1', 1.5),
+        vaultOfFrozenMoments: icon('Snowflake', '#cbd5e1', 1.5),
+        mycelialNetwork: icon('Bug', '#cbd5e1', 1.5),
+        aetheriumDocks: icon('Anchor', '#cbd5e1', 1.5),
+        gardenOfReciprocalHunger: icon('Leaf', '#cbd5e1', 1.5),
+        sunkenCityOfTwoTides: icon('Waves', '#cbd5e1', 1.5),
+        architectsFolly: icon('Compass', '#cbd5e1', 1.5),
+        generic: icon('MapPin', '#cbd5e1', 1.5),
     };
     const key = Object.keys(icons).find(k => locationId.toLowerCase().includes(k)) || 'generic';
     return icons[key];
@@ -146,6 +146,24 @@ export function showDamagePopup(targetElementId: string, text: string, type: 'da
     });
 }
 
+export function showInfoModal(title: string, message: string, onClose: () => void) {
+    const modal = dom.infoModal;
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2>${title}</h2>
+            <p>${message}</p>
+            <button id="close-info-modal-btn">Close</button>
+        </div>
+    `;
+    const closeBtn = modal.querySelector('#close-info-modal-btn');
+    if(closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            onClose();
+        });
+    }
+    modal.classList.remove('hidden');
+}
 
 // --- RENDERING ---
 
@@ -154,7 +172,7 @@ export function renderCharacterSelection(characters: Character[], onSelect: (nam
         const classData = CLASS_DATA[char.name];
         return `
         <div class="selection-card" data-char-name="${char.name}">
-            <div class="character-portrait" data-portrait-container="true"><img src="${char.imageUrl}" alt="${char.name}"></div>
+            <div class="character-portrait" data-portrait-container="true">${char.portrait}</div>
             <h3>${char.name}</h3>
             <p class="character-description">${classData.description}</p>
             <div class="passive-skill">
@@ -166,7 +184,7 @@ export function renderCharacterSelection(characters: Character[], onSelect: (nam
     
     dom.characterSelectionCards.querySelectorAll('.selection-card').forEach(cardEl => {
         const card = cardEl as HTMLElement;
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
             dom.characterSelectionCards.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             const selectedName = card.dataset.charName as CharacterClass;
@@ -175,6 +193,18 @@ export function renderCharacterSelection(characters: Character[], onSelect: (nam
     });
 }
 
+export function showAssetGenerationModal() {
+    dom.assetGenerationModal.classList.remove('hidden');
+}
+
+export function updateGenerationProgress(percentage: number, status: string) {
+    dom.generationProgressBar.style.width = `${percentage}%`;
+    dom.generationStatusText.textContent = status;
+}
+
+export function hideAssetGenerationModal() {
+    dom.assetGenerationModal.classList.add('hidden');
+}
 
 export function renderActionLog(log: string[]) {
     dom.actionLog.innerHTML = log.map(msg => `<p>${msg}</p>`).join('');
@@ -218,7 +248,7 @@ function renderPlayerCombatant(player: Character) {
         <div class="damage-popup-container"></div>
         <div class="combatant-hud-content">
             <div class="combatant-portrait-wrapper">
-                <img src="${player.imageUrl}" alt="${player.name}" class="combatant-portrait-img">
+                ${player.portrait.replace('<img', '<img class="combatant-portrait-img"')}
             </div>
             <div class="combatant-info">
                 <h3>${player.name}</h3>
@@ -268,7 +298,7 @@ function renderEnemyCombatant(enemy: Enemy) {
                 <div class="buff-container"></div>
             </div>
             <div class="combatant-portrait-wrapper" style="--rank-color: ${rankColor};">
-                 <img src="${enemy.imageUrl}" alt="${enemy.name}" class="combatant-portrait-img">
+                 ${enemy.portrait.replace('<img', '<img class="combatant-portrait-img"')}
             </div>
         </div>
     `;
@@ -349,10 +379,10 @@ export function renderCharacterPanel(player: Character, onOpenInventory: () => v
     dom.characterPanel.innerHTML = `
         <div class="character-card selected ${newSkillClass}" id="player-character-card" data-char-name="${char.name}">
             <button class="character-card-quest-btn" id="quest-log-btn" title="Quest Log">
-                <i class="fa-solid fa-book-journal-whills"></i>
+                ${icon('Book', '#cbd5e1', 1.5)}
             </button>
             <button class="character-card-settings-btn" id="settings-btn" title="Settings">
-                <i class="fa-solid fa-gear"></i>
+                ${icon('Settings', '#cbd5e1', 1.5)}
             </button>
             <div class="character-portrait" style="border-color: ${title.borderColor};" title="Open Inventory">${char.portrait}</div>
             <div class="character-card-info" title="Open Inventory">
@@ -530,7 +560,6 @@ export function renderInventoryList(player: Character, onSelect: (id: string) =>
                 const itemClass = `item-name-${item.type.replace(/\s/g, '')}`;
                 return `
                 <div class="inventory-item" data-item-id="${item.id}">
-                    <img src="${item.imageUrl}" alt="${item.name}" class="item-icon">
                     <span class="${itemClass}">${item.name}</span>
                     <span> (x${player.inventory[item.id]})</span>
                 </div>
@@ -562,9 +591,7 @@ export function renderItemDetails(player: Character, itemId: string, onEquip: (i
     const descEl = dom.getElement('item-details-description');
     const statsEl = dom.getElement('item-details-stats');
     const actionsEl = dom.getElement('item-details-actions');
-    const iconEl = dom.getElement('item-details-icon');
     
-    iconEl.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}">`;
     nameEl.textContent = item.name;
     nameEl.style.color = RARITY_DATA[item.rarity].color;
     descEl.textContent = item.description;
@@ -676,29 +703,28 @@ export function openShopModal(player: Character, shopInventory: { item: Item | E
 
             if (sellableItems.length === 0) {
                 itemsContainer.innerHTML = `<p>You have nothing to sell.</p>`;
-                return;
-            }
-
-            itemsContainer.innerHTML = sellableItems.map(({ item, count }) => {
-                const sellPrice = Math.max(1, Math.floor(item.baseCost * 0.3));
-                return `
-                    <div class="sell-item">
-                         <div class="sell-item-info">
-                            <h4 style="color: ${RARITY_DATA[item.rarity].color}">${item.name} (x${count})</h4>
-                            <p>${item.description}</p>
+            } else {
+                itemsContainer.innerHTML = sellableItems.map(({ item, count }) => {
+                    const sellPrice = Math.max(1, Math.floor(item.baseCost * 0.3));
+                    return `
+                        <div class="sell-item">
+                             <div class="sell-item-info">
+                                <h4 style="color: ${RARITY_DATA[item.rarity].color}">${item.name} (x${count})</h4>
+                                <p>${item.description}</p>
+                            </div>
+                            <button class="sell-btn" data-item-id="${item.id}">
+                                Sell (${sellPrice} G)
+                            </button>
                         </div>
-                        <button class="sell-btn" data-item-id="${item.id}">
-                            Sell (${sellPrice} G)
-                        </button>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
 
-            itemsContainer.querySelectorAll('.sell-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    onSell((e.currentTarget as HTMLElement).dataset.itemId!);
+                itemsContainer.querySelectorAll('.sell-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        onSell((e.currentTarget as HTMLElement).dataset.itemId!);
+                    });
                 });
-            });
+            }
         }
 
         // Attach listeners to toggle buttons
@@ -889,97 +915,6 @@ export function openQuestLogModal(player: Character) {
 
     dom.getElement('close-quest-log-btn').onclick = () => modal.classList.add('hidden');
     modal.classList.remove('hidden');
-}
-
-export async function preloadAssets(gameData: any, onComplete: () => void) {
-    const assetsToLoad: { name: string; description: string; type: string; obj: any }[] = [];
-
-    // Collect all assets that need image generation
-    Object.values(gameData.classData).forEach((c: any) => {
-        if (!c.imageUrl) assetsToLoad.push({ name: c.name, description: c.description, type: 'character', obj: c });
-    });
-    Object.values(gameData.items).forEach((i: any) => {
-        // Only generate for interesting items, not basic materials or quest items for now
-        if (!i.imageUrl && (i.type === 'Equipment' || i.type === 'Consumable' || i.type === 'PetEgg' || i.type === 'SkillTome')) {
-            assetsToLoad.push({ name: i.name, description: i.description, type: 'item', obj: i });
-        }
-    });
-    Object.values(gameData.enemies).forEach((e: any) => {
-        if (!e.imageUrl) assetsToLoad.push({ name: e.name, description: e.description, type: 'enemy', obj: e });
-    });
-
-    const totalAssets = assetsToLoad.length;
-    let loadedAssets = 0;
-    const progressBar = dom.getElement('progress-bar');
-    const loadingPercentage = dom.getElement('loading-percentage');
-    const loadingMessage = dom.getElement('loading-message');
-
-
-    if (totalAssets === 0) {
-        // Even if there's nothing to generate, hide the preloader and continue
-        dom.getElement('preloading-screen').classList.add('hidden');
-        if (!localStorage.getItem('oaktaleGameState')) {
-           dom.getElement('intro-storyline').classList.remove('hidden');
-        }
-        onComplete();
-        return;
-    }
-
-    // Show preloading screen if it was hidden
-    dom.preloadingScreen.classList.remove('hidden');
-
-    console.log(`Found ${totalAssets} assets to generate.`);
-    const startTime = Date.now();
-
-    for (const asset of assetsToLoad) {
-        const progress = (loadedAssets / totalAssets) * 100;
-        progressBar.style.width = `${progress}%`;
-        loadingPercentage.textContent = `${Math.round(progress)}`;
-        loadingMessage.innerHTML = `Generating ${asset.type}: <strong>${asset.name}</strong>...`;
-
-        let prompt = '';
-        switch (asset.type) {
-            case 'character':
-                prompt = `Digital painting of a fantasy RPG character portrait. A ${asset.name}. ${asset.description}. Epic, detailed, high fantasy art style.`;
-                break;
-            case 'item':
-                prompt = `A fantasy RPG item icon for a ${asset.name}. ${asset.description}. Clean, simple background, painterly style.`;
-                break;
-            case 'enemy':
-                prompt = `Digital painting of a fantasy RPG monster portrait. A ${asset.name}. ${asset.description}. Dark, gritty, realistic fantasy art style.`;
-                break;
-        }
-
-        try {
-            console.log(`Generating image for ${asset.name} with prompt: "${prompt}"`);
-            const imageUrl = await generateImage(prompt);
-            asset.obj.imageUrl = imageUrl;
-        } catch (error) {
-            console.error(`Failed to generate image for ${asset.name}:`, error);
-            // Assign a placeholder so we don't try again next time
-            asset.obj.imageUrl = 'https://via.placeholder.com/64';
-        }
-
-        loadedAssets++;
-    }
-
-    // Final progress bar update
-    progressBar.style.width = `100%`;
-    loadingPercentage.textContent = `100`;
-    loadingMessage.textContent = 'Generation complete!';
-
-
-    const endTime = Date.now();
-    console.log(`Preloading complete in ${endTime - startTime}ms.`);
-
-    // Short delay to show completion before fading out
-    setTimeout(() => {
-        dom.getElement('preloading-screen').classList.add('hidden');
-         if (!localStorage.getItem('oaktaleGameState')) {
-           dom.getElement('intro-storyline').classList.remove('hidden');
-        }
-        onComplete();
-    }, 1000);
 }
 
 export function openSettingsModal(onClearLog: () => void, onSave: () => void, onQuit: () => void, onImport: () => void, onExport: () => void) {

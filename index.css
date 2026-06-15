@@ -1,3 +1,4 @@
+
 :root {
     --bg-color: #0d0a0f;
     --primary-text: #e8e6e3;
@@ -230,6 +231,9 @@ h3 {
     opacity: 0;
     animation: fadeIn 0.5s ease forwards;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #skip-intro-btn:hover {
@@ -300,6 +304,14 @@ h3 {
     width: 100px;
     height: 100px;
     margin: 0 auto 1rem auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.selection-card .character-portrait svg {
+    width: 100%;
+    height: 100%;
+    color: #cbd5e1; /* Default stroke color if not set */
 }
 
 .selection-card .character-description {
@@ -329,55 +341,6 @@ h3 {
     margin-top: 0;
     line-height: 1.4;
 }
-
-.selection-card .generate-portrait-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: rgba(29, 23, 36, 0.7);
-    border: 1px solid var(--border-color);
-    color: var(--secondary-text);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-}
-
-.selection-card .generate-portrait-btn:hover {
-    background-color: var(--card-bg-light);
-    color: var(--primary-text);
-    transform: scale(1.1);
-}
-
-.generate-portrait-btn.loading i {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.portrait-loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    border-radius: 50%;
-}
-
 
 /* Character Panel */
 #character-panel {
@@ -529,8 +492,16 @@ h3 {
     transition: color 0.2s;
 }
 
-.character-card-settings-btn:hover i,
-.character-card-quest-btn:hover i {
+.character-card-settings-btn svg,
+.character-card-quest-btn svg {
+    width: 18px;
+    height: 18px;
+    color: var(--secondary-text);
+    transition: color 0.2s;
+}
+
+.character-card-settings-btn:hover svg,
+.character-card-quest-btn:hover svg {
     color: var(--primary-text);
 }
 
@@ -745,6 +716,10 @@ h3 {
     color: var(--secondary-text);
     transition: color 0.2s ease;
 }
+.location-card-icon svg {
+    width: 100%;
+    height: 100%;
+}
 .location-card.disabled .location-card-icon {
     color: #555;
 }
@@ -865,6 +840,15 @@ h3 {
     position: relative;
     z-index: 1;
     clip-path: inherit;
+}
+.combatant-portrait-wrapper svg {
+    width: 70%;
+    height: 70%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
 }
 
 .combatant-info {
@@ -1021,6 +1005,18 @@ h3 {
     align-items: center;
     gap: 1.5rem;
 }
+.gold-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: max-content;
+}
+.gold-display svg {
+    width: 16px;
+    height: 16px;
+    color: var(--log-gold);
+}
+
 #items-list {
     display: flex;
     gap: 1rem;
@@ -1203,6 +1199,43 @@ button:disabled {
     flex-direction: column;
     box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
+
+/* Asset Generation Modal Specifics */
+.generation-modal-content {
+    text-align: center;
+    padding: 2rem;
+    max-width: 400px;
+}
+
+.generation-modal-content h2 {
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.progress-container {
+    width: 100%;
+    height: 10px;
+    background-color: var(--bg-color);
+    border-radius: 5px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+#generation-progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px var(--accent-color);
+}
+
+#generation-status-text {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    min-height: 1.2em;
+}
+
 
 .modal-header {
     padding: 1.5rem;
@@ -1446,21 +1479,10 @@ button:disabled {
     margin-top: 0;
 }
 .inventory-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     padding: 0.6rem;
     border-radius: 4px;
     cursor: pointer;
     border: 1px solid transparent;
-}
-
-.item-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    background-color: var(--bg-color);
-    flex-shrink: 0;
 }
 .inventory-item:hover {
     background-color: var(--card-bg-light);
@@ -1493,12 +1515,19 @@ button:disabled {
     align-items: center;
     font-size: 0.9rem;
 }
-.equipment-slots .slot span { color: var(--primary-text); }
-.equipment-slots .slot i {
+.equipment-slots .slot span.val { color: var(--primary-text); }
+.equipment-slots .slot .icon {
     margin-right: 0.75rem;
     color: var(--secondary-text);
     width: 20px;
-    text-align: center;
+    height: 20px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+.equipment-slots .slot .icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 #item-details-pane, #item-details-placeholder {
@@ -1507,21 +1536,6 @@ button:disabled {
     padding: 1rem;
     border-radius: 8px;
     min-height: 200px;
-}
-
-#item-details-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 8px;
-    background-color: var(--bg-color);
-    margin-bottom: 1rem;
-    overflow: hidden;
-}
-
-#item-details-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 #item-details-placeholder {
     display: flex;
@@ -1577,6 +1591,10 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+.settings-option label svg {
+    width: 18px;
+    height: 18px;
 }
 
 .settings-option button {
@@ -1862,7 +1880,12 @@ button:disabled {
     }
     .inventory-container {
         flex-direction: column;
-        height: 60vh;
+        height: auto;
+        max-height: 75vh;
+        padding: 1rem;
+    }
+    .inventory-list-section {
+        max-height: 250px;
     }
     #story-text {
         font-size: 1.2rem;
@@ -1914,46 +1937,6 @@ button:disabled {
         transform: translateY(-50%);
         right: 40px;
     }
-/* Preloading Screen */
-#preloading-screen {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    height: 100%;
-    width: 100%;
-    padding: 2rem;
-}
-
-#preloading-screen h2 {
-    margin-bottom: 2rem;
-}
-
-#progress-bar-container {
-    width: 100%;
-    max-width: 400px;
-    height: 20px;
-    background-color: var(--card-bg-light);
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
-
-#progress-bar {
-    width: 0%;
-    height: 100%;
-    background-color: var(--accent-color);
-    transition: width 0.3s ease-in-out;
-}
-
-#loading-message {
-    color: var(--secondary-text);
-    font-size: 0.9rem;
-    height: 1.2em; /* Reserve space to prevent layout shift */
-}
-
     .combatant-portrait-wrapper {
         width: 80px;
         height: 80px;
@@ -1963,6 +1946,25 @@ button:disabled {
         height: 50px;
     }
     .combatant-info h3 { font-size: 1.5rem; }
+
+    /* Mobile Inventory Tweaks */
+    .inventory-container {
+        padding: 0.5rem;
+    }
+    .inventory-item {
+        padding: 0.8rem;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    .inventory-item span:first-child {
+        font-weight: 700;
+    }
+    .equipment-slots .slot {
+        padding: 0.75rem 0;
+    }
+    #item-details-pane, #item-details-placeholder {
+        min-height: 150px;
+    }
 }
 
 @media (max-height: 600px) {

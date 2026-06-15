@@ -1,5 +1,8 @@
 {
   "requestFramePermissions": [],
   "name": "Oaktale",
-  "description": "A dark corruption spreads from the heart of the woods. The Great Oak is dying. As a hero of the realm, you must venture forth to cleanse the land, uncover the source of the blight, and restore Oaktale to its former glory."
+  "description": "A dark corruption spreads from the heart of the woods. The Great Oak is dying. As a hero of the realm, you must venture forth to cleanse the land, uncover the source of the blight, and restore Oaktale to its former glory.",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
